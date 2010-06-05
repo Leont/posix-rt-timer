@@ -4,12 +4,41 @@ use 5.008;
 
 use strict;
 use warnings FATAL => 'all';
-use Exporter 5.57 qw/import/;
-use XSLoader;
 
-BEGIN {
-	our $VERSION = '0.001';
-	XSLoader::load(__PACKAGE__, $VERSION);
+use XSLoader ();
+use POSIX    ();
+use Carp     ();
+use Exporter 5.57 qw/import/;
+
+our $VERSION = '0.001';
+XSLoader::load(__PACKAGE__, $VERSION);
+
+sub _get_args {
+	my %options = @_;
+	Carp::croak('no time defined') if not defined $options{value};
+	if (defined $options{callback}) {
+		return (callback => $options{callback});
+	}
+	elsif (defined $options{signal}) {
+		return (signal => $options{signal});
+	}
+	else {
+		Carp::croak('Unknown type');
+	}
+}
+
+sub new {
+	my ($class, @args) = @_;
+	my %options = (
+		interval => 0,
+		value    => 0,
+		clock    => 'monotonic',
+		@args,
+	);
+	my @create_args = _get_args(%options);
+	my $ret = $class->create($options{clock}, @create_args);
+	$ret->set_time(@options{ 'value', 'interval' });
+	return $ret;
 }
 
 1;    # End of POSIX::RT::Timer
@@ -22,7 +51,7 @@ POSIX::RT::Timer - The great new POSIX::RT::Timer!
 
 =head1 VERSION
 
-Version 0.01
+Version 0.001
 
 =cut
 
@@ -32,9 +61,12 @@ Quick summary of what the module does.
 
 Perhaps a little code snippet.
 
-    use POSIX::RT::Timer;
+ use POSIX::RT::Timer;
 
-    my $timer = POSIX::RT::Timer->new();
+ my $timer = POSIX::RT::Timer->new(value => 1, callback => sub {
+     my $timer = shift;
+	 # do something
+ });
 
 =head1 METHODS
 
@@ -42,7 +74,31 @@ Perhaps a little code snippet.
 
 =over 4
 
-=item * new
+=item * new(%options)
+
+Create a new timer.
+
+=over 4
+
+=item * value
+
+=item * interval
+
+=item * clock 
+
+=item * signal
+
+=item * callback
+
+=back
+
+=item * create(clock_type, response_type => $arg)
+
+Create a new timer object.
+
+=item * get_clocks()
+
+Get a list of all supported clocks.
 
 =back
 
@@ -52,9 +108,13 @@ Perhaps a little code snippet.
 
 =item * get_time()
 
-=item * set_time(value, interval = 0)
+=item * set_time(value, interval = 0, use_abstime = 0)
 
 =item * get_overrun()
+
+=item * get_callback()
+
+=item * set_callback(callback)
 
 =back
 
