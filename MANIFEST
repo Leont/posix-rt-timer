@@ -1,9 +1,10 @@
 Build.PL
 Changes
+LICENSE
 MANIFEST
 README
 lib/POSIX/RT/Timer.pm
+lib/POSIX/RT/Timer.xs
 t/00-load.t
-t/manifest.t
 t/pod-coverage.t
 t/pod.t

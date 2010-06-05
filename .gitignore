@@ -12,3 +12,4 @@ pod2htm*.tmp
 POSIX-RT-Timer-*
 *.o
 *.c
+.*.swp
