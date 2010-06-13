@@ -105,7 +105,7 @@ static clockid_t S_get_clock(pTHX_ SV* ref, const char* funcname) {
 #define NANO_SECONDS 1000000000
 
 static NV timespec_to_nv(struct timespec* time) {
-	return time->tv_sec + time->tv_nsec / NANO_SECONDS;
+	return time->tv_sec + time->tv_nsec / (double)NANO_SECONDS;
 }
 
 static void nv_to_timespec(NV input, struct timespec* output) {
@@ -327,6 +327,7 @@ new(class, clock_type)
 	OUTPUT:
 		RETVAL
 
+#ifdef linux
 SV*
 get_cpuclock(class, pid = 0)
 	const char* class;
@@ -339,6 +340,8 @@ get_cpuclock(class, pid = 0)
 		RETVAL = create_clock(clockid, class);
 	OUTPUT:
 		RETVAL
+
+#endif
 
 void
 get_clocks(class)
@@ -413,11 +416,33 @@ sleep(self, frac_time, abstime = 0)
 		clockid = get_clock(self, "sleep");
 		nv_to_timespec(frac_time, &sleep_time);
 		if (abstime) {
-			clock_nanosleep(clockid, TIMER_ABSTIME, &sleep_time, NULL);
-			RETVAL = abstime;
+			if (clock_nanosleep(clockid, TIMER_ABSTIME, &sleep_time, NULL) == -1)
+				RETVAL = frac_time;
+			else
+				RETVAL = 0;
 		}
 		else {
-			clock_nanosleep(clockid, 0, &sleep_time, &remain_time);
-			RETVAL = timespec_to_nv(&remain_time);
+			if (clock_nanosleep(clockid, 0, &sleep_time, &remain_time) == -1)
+				RETVAL = timespec_to_nv(&remain_time);
+			else
+				RETVAL = 0;
 		}
+	OUTPUT:
+		RETVAL
 
+NV
+sleep_deeply(self, frac_time)
+	SV* self;
+	NV frac_time;
+	PREINIT:
+		clockid_t clockid;
+		struct timespec sleep_time, remain_time;
+		NV realtime;
+	CODE:
+		clockid = get_clock(self, "get_time");
+		if (clock_gettime(clockid, &time) == -1)
+			die_sys("Couldn't get time: %s");
+		realtime = timespec_to_nv(&time) + frac_time;
+		nv_to_timespec(frac_time, &sleep_time);
+			while (clock_nanosleep(clockid, TIMER_ABSTIME, &sleep_time, NULL) == -1);
+		RETVAL = 0;

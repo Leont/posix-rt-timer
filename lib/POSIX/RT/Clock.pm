@@ -7,7 +7,7 @@ use warnings FATAL => 'all';
 
 our $VERSION = '0.001';
 
-require POSIX::RT::Timer;
+use POSIX::RT::Timer;
 
 sub _get_args {
 	my %options = @_;
@@ -116,6 +116,10 @@ Get the resolution of this clock.
 =item * sleep($time, $abstime)
 
 Sleep a certain amount of seconds on this clock. Note that it is B<never> restarted after interruption by a signal handler. It returns the remaining time. $time and the return value are relative time unless $abstime is true.
+
+=item * sleep_deeply($time)
+
+Sleep a certain amount of time. Unlike C<sleep>, it will retry on interruption until the time has passed.
 
 =item * timer(%options)
 
