@@ -13,32 +13,13 @@ use Exporter 5.57 qw/import/;
 our $VERSION = '0.001';
 XSLoader::load(__PACKAGE__, $VERSION);
 
-sub _get_args {
-	my %options = @_;
-	Carp::croak('no time defined') if not defined $options{value};
-	if (defined $options{callback}) {
-		return (callback => $options{callback});
-	}
-	elsif (defined $options{signal}) {
-		return (signal => $options{signal});
-	}
-	else {
-		Carp::croak('Unknown type');
-	}
-}
+use POSIX::RT::Clock;
 
 sub new {
-	my ($class, @args) = @_;
-	my %options = (
-		interval => 0,
-		value    => 0,
-		clock    => 'monotonic',
-		@args,
-	);
-	my @create_args = _get_args(%options);
-	my $ret = $class->create($options{clock}, @create_args);
-	$ret->set_time(@options{ 'value', 'interval' });
-	return $ret;
+	my ($class, %options) = @_;
+	my $clock = POSIX::RT::Clock->new(delete $options{clock} || 'realtime');
+	my $ret = $clock->timer(%options, class => $class);
+	return bless $ret, $class;
 }
 
 1;    # End of POSIX::RT::Timer
@@ -47,7 +28,7 @@ __END__
 
 =head1 NAME
 
-POSIX::RT::Timer - The great new POSIX::RT::Timer!
+POSIX::RT::Timer - POSIX real-time timers
 
 =head1 VERSION
 
@@ -57,16 +38,20 @@ Version 0.001
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
-
  use POSIX::RT::Timer;
 
  my $timer = POSIX::RT::Timer->new(value => 1, callback => sub {
      my $timer = shift;
 	 # do something
  });
+
+=head1 DESCRIPTION
+
+This module provides for timers. Unlike getitimer/setitimer an arbitrary number of timers is supported. There are two kinds of timers: signal timers and callback timers.
+
+Signal timers send a signal to the process, much like itimers. You can specify which signal is sent, using realtime signals is recommended.
+
+Callback timers call a callback on expiration. They are actually implemented by a signal handler on C<$POSIX::RT::Timer::SIGNO>. The value of this variable can be set B<before> loading this module. Callbacks are called with the timer as their only argument.
 
 =head1 METHODS
 
@@ -76,13 +61,17 @@ Perhaps a little code snippet.
 
 =item * new(%options)
 
-Create a new timer.
+Create a new timer. Options include
 
 =over 4
 
 =item * value
 
+The time in factional seconds for timer expiration. If it is zero, the default, the timer is disarmed.
+
 =item * interval
+
+The value the timer is set to after expiration. If this is set to 0, it is a one-shot timer.
 
 =item * clock 
 
@@ -92,9 +81,7 @@ Create a new timer.
 
 =back
 
-=item * create(clock_type, response_type => $arg)
-
-Create a new timer object.
+Signal and callback are mutually exclusive. It is mandatory to set one of these. Signal timers can not be converted into callback timers and vice-versa.
 
 =item * get_clocks()
 
@@ -108,13 +95,23 @@ Get a list of all supported clocks.
 
 =item * get_time()
 
-=item * set_time(value, interval = 0, use_abstime = 0)
+Get the timer value. In list context, it also returns the interval value. Note that this value is always relative to the current time.
+
+=item * set_time(value, interval = 0, abstime = 0)
+
+Set the timer and interval values. If abstime is true, they are absolute values, otherwise they are relative to the current time. Returns the old value like get_time does.
 
 =item * get_overrun()
 
+Get the overrun count for the timer. The timer overrun count is the number of additional timer expirations that occurred since the 
+
 =item * get_callback()
 
+Get the callback function.
+
 =item * set_callback(callback)
+
+Set the callback function.
 
 =back
 
@@ -123,6 +120,8 @@ Get a list of all supported clocks.
 Leon Timmermans, C<< <leont at cpan.org> >>
 
 =head1 BUGS
+
+Perl can interact weirdly with signals. Beware of the dragons.
 
 Please report any bugs or feature requests to C<bug-posix-rt-timer at rt.cpan.org>, or through
 the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=POSIX-RT-Timer>.  I will be notified, and then you'll

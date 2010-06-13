@@ -42,8 +42,8 @@ static void S_die_sys(pTHX_ const char* format) {
 typedef struct { const char* key; clockid_t value; } map[];
 
 static map clocks = {
-	{ "monotonic", CLOCK_MONOTONIC },
-	{ "realtime" , CLOCK_REALTIME  }
+	{ "realtime" , CLOCK_REALTIME  },
+	{ "monotonic", CLOCK_MONOTONIC }
 #ifdef CLOCK_PROCESS_CPUTIME_ID
 	, { "process_cputime_id", CLOCK_PROCESS_CPUTIME_ID }
 #endif
@@ -52,7 +52,7 @@ static map clocks = {
 #endif
 };
 
-static clockid_t S_get_clock(pTHX_ const char* clock_name) {
+static clockid_t S_get_clockid(pTHX_ const char* clock_name) {
 	int i;
 	for (i = 0; i < sizeof clocks / sizeof *clocks; ++i) {
 		if (strEQ(clock_name, clocks[i].key))
@@ -60,7 +60,7 @@ static clockid_t S_get_clock(pTHX_ const char* clock_name) {
 	}
 	Perl_croak(aTHX_ "No such timer '%s' known", clock_name);
 }
-#define get_clock(name) S_get_clock(aTHX_ name)
+#define get_clockid(name) S_get_clockid(aTHX_ name)
 
 int S_get_signo(pTHX) {
 	SV** tmp = hv_fetch(PL_modglobal, "POSIX::RT::Timer::SIGNO", 23, FALSE);
@@ -74,7 +74,7 @@ static void init_event(struct sigevent* event, int signo, void* ptr) {
 	event->sigev_value.sival_ptr = ptr;
 }
 
-CV* get_callback(pTHX_ SV* arg) {
+CV* create_callback(pTHX_ SV* arg) {
 	HV* stash;
 	GV* gv;
 	CV* ret = sv_2cv(arg, &stash, &gv, 0);
@@ -94,6 +94,13 @@ static MAGIC* S_get_magic(pTHX_ SV* ref, const char* funcname) {
 #define get_magic(ref, funcname) S_get_magic(aTHX_ ref, funcname)
 #define get_timer(ref, funcname) (*(timer_t*)get_magic(ref, funcname)->mg_ptr)
 
+static clockid_t S_get_clock(pTHX_ SV* ref, const char* funcname) {
+	SV* value;
+	if (!SvROK(ref) || !(value = SvRV(ref)))
+		Perl_croak(aTHX_ "Could not %s: this variable is not a clock", funcname);
+	return SvIV(value);
+}
+#define get_clock(ref, func) S_get_clock(aTHX_ ref, func)
 
 #define NANO_SECONDS 1000000000
 
@@ -131,6 +138,8 @@ XS(callback) {
 		call_sv(callback, GIMME_V);
 		SPAGAIN;
 	}
+	else
+		Perl_warn(aTHX_ "Got a signal without a value on slot %d\n", info->si_signo);
 	PUTBACK;
 }
 
@@ -169,6 +178,54 @@ void register_callback(pTHX) {
 	LEAVE;
 }
 
+int timer_destroy(pTHX_ SV* var, MAGIC* magic) {
+	if (timer_delete(*(timer_t*)magic->mg_ptr))
+		die_sys("Can't delete timer: %s");
+}
+
+MGVTBL timer_magic = { NULL, NULL, NULL, NULL, timer_destroy };
+
+SV* S_create_timer(pTHX_ const char* class, clockid_t clockid, const char* type, SV* arg) {
+	struct sigevent event;
+	timer_t timer;
+	SV *tmp;
+	SV* retval;
+	CV* callback;
+
+	tmp = newSV(0);
+	retval = newRV_noinc(tmp);
+	sv_2mortal(retval);
+
+	if (strEQ(type, "signal")) {
+		init_event(&event, SvIV(arg), NULL);
+		callback = NULL;
+	}
+	else if (strEQ(type, "callback")) {
+		init_event(&event, get_signo(), tmp);
+		callback = create_callback(aTHX_ arg);
+	}
+	else
+		Perl_croak(aTHX_ "Unknown type '%s'", type);
+
+	if (timer_create(clockid, &event, &timer) == -1) 
+		die_sys("Couldn't create timer: %s");
+	MAGIC* magic = sv_magicext(tmp, (SV*)callback, PERL_MAGIC_ext, &timer_magic, (const char*)&timer, sizeof timer);
+
+	sv_bless(retval, gv_stashpv(class, 0));
+	return retval;
+}
+#define create_timer(class, clockid, type, arg) S_create_timer(aTHX_ class, clockid, type, arg)
+
+SV* S_create_clock(pTHX_ clockid_t clockid, const char* class) {
+	SV *tmp, *retval;
+	tmp = newSViv(clockid);
+	retval = newRV_noinc(tmp);
+	sv_bless(retval, gv_stashpv(class, 0));
+	SvREADONLY_on(tmp);
+	return retval;
+}
+#define create_clock(clockid, class) S_create_clock(aTHX_ clockid, class)
+
 MODULE = POSIX::RT::Timer				PACKAGE = POSIX::RT::Timer
 
 PROTOTYPES: DISABLED
@@ -181,55 +238,6 @@ BOOT:
 	hv_store(PL_modglobal, "POSIX::RT::Timer::SIGNO", 23, newSVsv(signo), 0);
 	
 	register_callback(aTHX);
-
-SV*
-create(class, clock_type, type, arg)
-	const char* class;
-	const char* clock_type;
-	const char* type;
-	SV* arg;
-	PREINIT:
-		clockid_t clockid;
-		struct sigevent event;
-		timer_t timer;
-		SV *tmp;
-		int signal;
-		CV* callback;
-	CODE:
-		clockid = get_clock(clock_type);
-		tmp = newSV(0);
-		RETVAL = newRV_noinc(tmp);
-
-		if (strEQ(type, "signal")) {
-			init_event(&event, SvIV(arg), NULL);
-			callback = NULL;
-		}
-		else if (strEQ(type, "callback")) {
-			init_event(&event, get_signo(), tmp);
-			callback = get_callback(aTHX_ arg);
-		}
-		else {
-			Perl_croak(aTHX_ "Unknown type '%s'", type);
-		}
-
-		MAGIC* magic = sv_magicext(tmp, (SV*)callback, PERL_MAGIC_ext, NULL, (const char*)&timer, sizeof timer);
-		if (timer_create(clockid, &event, (timer_t*) magic->mg_ptr) == -1) 
-			die_sys("Couldn't create timer: %s");
-
-		sv_bless(RETVAL, gv_stashpv(class, 0));
-	OUTPUT:
-		RETVAL
-
-void*
-get_clocks(class)
-	SV* class;
-	PREINIT:
-		size_t i;
-		const size_t max = sizeof clocks / sizeof *clocks;
-	PPCODE:
-		for (i = 0; i < max; ++i)
-			mXPUSHp(clocks[i].key, strlen(clocks[i].key));
-		XSRETURN(max);
 
 void
 get_time(self)
@@ -270,11 +278,11 @@ get_callback(self)
 	PREINIT:
 	MAGIC* magic;
 	CODE:
-	magic = get_magic(self, "get_callback");
-	if (magic->mg_obj) 
-		RETVAL = SvREFCNT_inc(magic->mg_obj);
-	else
-		RETVAL = &PL_sv_undef;
+		magic = get_magic(self, "get_callback");
+		if (magic->mg_obj) 
+			RETVAL = SvREFCNT_inc(magic->mg_obj);
+		else
+			RETVAL = &PL_sv_undef;
 	OUTPUT:
 		RETVAL
 
@@ -285,11 +293,11 @@ set_callback(self, callback)
 	PREINIT:
 	MAGIC* magic;
 	CODE:
-		magic = get_magic(self, "get_callback");
+		magic = get_magic(self, "set_callback");
 		if (!magic->mg_obj)
 			Perl_croak(aTHX_ "Can't set callback for this timer object");
 		RETVAL = magic->mg_obj;
-		magic->mg_obj = SvREFCNT_inc((SV*)get_callback(aTHX_ callback));
+		magic->mg_obj = SvREFCNT_inc((SV*)create_callback(aTHX_ callback));
 	OUTPUT:
 		RETVAL
 
@@ -306,11 +314,110 @@ get_overrun(self)
 	OUTPUT:
 		RETVAL
 
+MODULE = POSIX::RT::Timer				PACKAGE = POSIX::RT::Clock
+
+PROTOTYPES: DISABLED
+
+SV*
+new(class, clock_type) 
+	const char* class;
+	const char* clock_type;
+	CODE:
+		RETVAL = create_clock(get_clockid(clock_type), class);
+	OUTPUT:
+		RETVAL
+
+SV*
+get_cpuclock(class, pid = 0)
+	const char* class;
+	IV pid;
+	PREINIT:
+		clockid_t clockid;
+	CODE:
+		if (clock_getcpuclockid(pid, &clockid) != 0)
+			die_sys("Could not get cpuclock");
+		RETVAL = create_clock(clockid, class);
+	OUTPUT:
+		RETVAL
+
 void
-DESTROY(self)
+get_clocks(class)
+	SV* class;
+	PREINIT:
+		size_t i;
+		const size_t max = sizeof clocks / sizeof *clocks;
+	PPCODE:
+		for (i = 0; i < max; ++i)
+			mXPUSHp(clocks[i].key, strlen(clocks[i].key));
+		XSRETURN(max);
+
+void
+_timer(self, class, type, arg)
+	SV* self;
+	const char* class;
+	const char* type;
+	SV* arg;
+	PPCODE:
+		XPUSHs(create_timer(class, get_clock(self, "timer"), type, arg));
+
+NV
+get_time(self)
 	SV* self;
 	PREINIT:
-		timer_t timer;
+		clockid_t clockid;
+		struct timespec time;
 	CODE:
-		timer = get_timer(self, "DESTROY");
-		timer_delete(timer);
+		clockid = get_clock(self, "get_time");
+		if (clock_gettime(clockid, &time) == -1)
+			die_sys("Couldn't get time: %s");
+		RETVAL = timespec_to_nv(&time);
+	OUTPUT:
+		RETVAL
+
+void
+set_time(self, frac_time)
+	SV* self;
+	NV frac_time;
+	PREINIT:
+		clockid_t clockid;
+		struct timespec time;
+	CODE:
+		clockid = get_clock(self, "set_time");
+		nv_to_timespec(frac_time, &time);
+		if (clock_settime(clockid, &time) == -1)
+			die_sys("Couldn't set time: %s");
+
+NV
+get_resolution(self)
+	SV* self;
+	PREINIT:
+		clockid_t clockid;
+		struct timespec time;
+	CODE:
+		clockid = get_clock(self, "get_resolution");
+		if (clock_gettime(clockid, &time) == -1)
+			die_sys("Couldn't get resolution: %s");
+		RETVAL = timespec_to_nv(&time);
+	OUTPUT:
+		RETVAL
+
+NV
+sleep(self, frac_time, abstime = 0)
+	SV* self;
+	NV frac_time;
+	int abstime;
+	PREINIT:
+		clockid_t clockid;
+		struct timespec sleep_time, remain_time;
+	CODE:
+		clockid = get_clock(self, "sleep");
+		nv_to_timespec(frac_time, &sleep_time);
+		if (abstime) {
+			clock_nanosleep(clockid, TIMER_ABSTIME, &sleep_time, NULL);
+			RETVAL = abstime;
+		}
+		else {
+			clock_nanosleep(clockid, 0, &sleep_time, &remain_time);
+			RETVAL = timespec_to_nv(&remain_time);
+		}
+
