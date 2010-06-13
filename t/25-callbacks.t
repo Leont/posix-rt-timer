@@ -2,24 +2,11 @@
 
 use strict;
 use warnings;
-use Test::More tests => 4;
+use Test::More tests => 3;
 
 use Time::HiRes qw/alarm sleep/;
 use POSIX::RT::Timer;
 use POSIX qw/pause/;
-
-use Data::Dumper;
-
-{
-	my $timer = POSIX::RT::Timer->create('monotonic', callback => sub { pass('Got signal'); });
-
-	alarm 0.2;
-
-	$timer->set_time(0.1);
-
-	pause;
-
-}
 
 {
 	my $timer = POSIX::RT::Timer->new(value => 0.1, callback => sub { pass('Got signal'); });
@@ -34,10 +21,9 @@ use Data::Dumper;
 
 	my $counter;
 	my $num = 10;
-	my $timer = POSIX::RT::Timer->create('monotonic', callback => sub {
+	my $timer = POSIX::RT::Timer->new(value => 0.1, interval => 0.1, callback => sub {
 		$counter++;
 	});
-	$timer->set_time(0.1, 0.1);
 	pause while $num--;
 	is ($counter, 10);
 
