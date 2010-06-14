@@ -29,7 +29,7 @@ use POSIX qw/pause/;
 
 	alarm 0;
 
-	$timer->set_time(0, 0);
+	$timer->set_timeout(0, 0);
 
 	my $fail = 0;
 	$timer->set_callback(sub {

@@ -42,13 +42,25 @@ static void S_die_sys(pTHX_ const char* format) {
 typedef struct { const char* key; clockid_t value; } map[];
 
 static map clocks = {
-	{ "realtime" , CLOCK_REALTIME  },
-	{ "monotonic", CLOCK_MONOTONIC }
+	{ "realtime" , CLOCK_REALTIME  }
+#ifdef CLOCK_MONOTONIC
+	, { "monotonic", CLOCK_MONOTONIC }
+#elif defined CLOCK_HIGHRES
+	, { "monotonic", CLOCK_HIGHRES }
+#endif
 #ifdef CLOCK_PROCESS_CPUTIME_ID
-	, { "process_cputime_id", CLOCK_PROCESS_CPUTIME_ID }
+	, { "process", CLOCK_PROCESS_CPUTIME_ID }
+#elif defined CLOCK_PROF
+	, { "process", CLOCK_PROF }
 #endif
 #ifdef CLOCK_THREAD_CPUTIME_ID
-	, { "thread_cputime_id", CLOCK_THREAD_CPUTIME_ID }
+	, { "thread", CLOCK_THREAD_CPUTIME_ID }
+#endif
+#ifdef CLOCK_UPTIME
+	, { "uptime", CLOCK_UPTIME }
+#endif
+#ifdef CLOCK_VIRTUAL
+	, { "virtual", CLOCK_VIRTUAL }
 #endif
 };
 
@@ -255,7 +267,7 @@ BOOT:
 	register_callback(aTHX);
 
 void
-get_time(self)
+get_timeout(self)
 	SV* self;
 	PREINIT:
 		timer_t timer;
@@ -269,7 +281,7 @@ get_time(self)
 			mXPUSHn(timespec_to_nv(&value.it_interval));
 
 void
-set_time(self, new_value, new_interval = 0, abstime = 0)
+set_timeout(self, new_value, new_interval = 0, abstime = 0)
 	SV* self;
 	NV new_value;
 	NV new_interval;

@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 14;
+use Test::More;
 use Test::Exception;
 
 use POSIX::RT::Clock;
@@ -25,7 +25,12 @@ ok scalar(keys %clocks), 'Has clocks';
 
 note("Supported clocks are: ". join ', ', keys %clocks) if not $ENV{AUTOMATED_TESTING};
 
-is $clocks{realtime}, 1, 'Realtime clock is supported';
+is delete $clocks{realtime}, 1, 'Realtime clock is supported';
+
+for my $clock_name (keys %clocks) {
+	my $new_clock = POSIX::RT::Clock->new($clock_name);
+	ok($new_clock->get_time(), "Clock '$clock_name' seems to work");
+}
 
 ok $clock->get_resolution, 'Can get resolution';
 
@@ -50,3 +55,5 @@ cmp_ok($clock->sleep(0.5), '>', 0.2, 'Sleeper interrupted');
 
 alarm 0.2;
 is($clock->sleep_deeply(0.5), 0, 'Deep sleeper continued');
+
+done_testing(14 + scalar keys %clocks);

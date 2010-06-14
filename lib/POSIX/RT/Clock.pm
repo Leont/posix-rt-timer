@@ -32,7 +32,7 @@ sub timer {
 		%args,
 	);
 	my $ret = $class->_timer($options{class}, _get_args(%options));
-	$ret->set_time(@options{ 'value', 'interval' });
+	$ret->set_timeout(@options{ 'value', 'interval' });
 	return $ret;
 }
 
@@ -59,6 +59,8 @@ Version 0.001
 
 =head1 DESCRIPTION
 
+POSIX::RT::Clock offers access to various clocks, both portable and OS dependent.
+
 =head1 METHODS
 
 =head2 Class methods
@@ -66,6 +68,8 @@ Version 0.001
 =over 4
 
 =item * new($type)
+
+Create a new clock. The C<$type>s supported are documented in C<get_clocks>.
 
 =item * get_clocks()
 
@@ -75,25 +79,33 @@ Get a list of all supported clocks. These will be returned by their names, not a
 
 =item * realtime 
 
-The only timer guaranteed to always available. This is the default.
+The same clock as C<time> and L<Time::HiRes> use. It is the only timer guaranteed to always available and is therefor the default.
 
 =item * monotonic
 
-A non-settable clock guaranteed to be monotonic.
+A non-settable clock guaranteed to be monotonic. This is defined in POSIX and supported on most operating systems.
 
-=item * process_cpu_time
+=item * process
 
-A clock that measures (user and system) CPU time consumed by (all of the threads in) the calling process. This is Linux specific.
+A clock that measures (user and system) CPU time consumed by (all of the threads in) the calling process. This is supported on many operating systems.
 
-=item * thread_cpu_time
+=item * thread
 
 A clock that measures (user and system) CPU time consumed by the calling thread. This is Linux specific.
+
+=item * uptime
+
+A clock that measures the uptime of the system. This is FreeBSD specific.
+
+=item * virtual
+
+A clock that counts time the process spent in userspace. This is supported only in FreeBSD, NetBSD and Solaris.
 
 =back
 
 =item * get_cpuclock($pid = 0)
 
-Get the cpu-time clock for the process specified in $pid. If $pid is zero the current process is taken, this is the same as  
+Get the cpu-time clock for the process specified in $pid. If $pid is zero the current process is taken, this is the same as the C<process> clock. This call is currently not supported on most operating systems, despite being defined in POSIX.
 
 =back
 
@@ -103,23 +115,23 @@ Get the cpu-time clock for the process specified in $pid. If $pid is zero the cu
 
 =item * get_time()
 
-Get the time on this clock.
+Get the time of this clock.
 
 =item * set_time($time)
 
-Set the time on this clock. Note that this may not make sense on clocks other than C<realtime>.
+Set the time of this clock. Note that this may not make sense on clocks other than C<realtime> and will require sysadmin permissions.
 
 =item * get_resolution()
 
 Get the resolution of this clock.
 
-=item * sleep($time, $abstime)
+=item * sleep($time, $abstime = 0)
 
-Sleep a certain amount of seconds on this clock. Note that it is B<never> restarted after interruption by a signal handler. It returns the remaining time. $time and the return value are relative time unless $abstime is true.
+Sleep a C<$time> seconds on this clock. Note that it is B<never> restarted after interruption by a signal handler. It returns the remaining time. $time and the return value are relative time unless C<$abstime> is true.
 
-=item * sleep_deeply($time)
+=item * sleep_deeply($time, $abstime = 0)
 
-Sleep a certain amount of time. Unlike C<sleep>, it will retry on interruption until the time has passed.
+Sleep a C<$time> seconds on this clock. Unlike C<sleep>, it will retry on interruption until the time has passed.
 
 =item * timer(%options)
 

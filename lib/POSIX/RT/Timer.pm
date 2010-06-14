@@ -63,27 +63,33 @@ Create a new timer. Options include
 
 =over 4
 
-=item * value
+=item * value = 0
 
-The time in factional seconds for timer expiration. If it is zero, the default, the timer is disarmed.
+The time in factional seconds for timer expiration. If it is 0 the timer is disarmed.
 
-=item * interval
+=item * interval = 0
 
 The value the timer is set to after expiration. If this is set to 0, it is a one-shot timer.
 
-=item * clock 
+=item * clock = 'realtime'
+
+The type of clock
 
 =item * signal
 
+The signal number to send a signal to on timer expiration.
+
 =item * callback
+
+The callback to call on timer expiration. The callback will receive the timer as its only arguments.
 
 =back
 
-Signal and callback are mutually exclusive. It is mandatory to set one of these. Signal timers can not be converted into callback timers and vice-versa.
+Signal and callback options are mutually exclusive. It is mandatory to set one of these. Signal timers can not be converted into callback timers or reverse.
 
 =item * get_clocks()
 
-Get a list of all supported clocks.
+Get a list of all supported clocks by their names.
 
 =back
 
@@ -91,23 +97,23 @@ Get a list of all supported clocks.
 
 =over 4
 
-=item * get_time()
+=item * get_timeout()
 
-Get the timer value. In list context, it also returns the interval value. Note that this value is always relative to the current time.
+Get the timeout value. In list context, it also returns the interval value. Note that this value is always relative to the current time.
 
-=item * set_time(value, interval = 0, abstime = 0)
+=item * set_timeout($value, $interval = 0, $abstime = 0)
 
-Set the timer and interval values. If abstime is true, they are absolute values, otherwise they are relative to the current time. Returns the old value like get_time does.
+Set the timer and interval values. If C<$abstime> is true, they are absolute values, otherwise they are relative to the current time. Returns the old value like C<get_time> does.
 
 =item * get_overrun()
 
-Get the overrun count for the timer. The timer overrun count is the number of additional timer expirations that occurred since the 
+Get the overrun count for the timer. The timer overrun count is the number of additional timer expirations that occurred since the signal was sent.
 
 =item * get_callback()
 
 Get the callback function.
 
-=item * set_callback(callback)
+=item * set_callback($callback)
 
 Set the callback function.
 

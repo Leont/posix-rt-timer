@@ -50,7 +50,7 @@ use POSIX qw/SIGUSR1 pause/;
 
 	alarm 0;
 
-	$timer->set_time(0, 0);
+	$timer->set_timeout(0, 0);
 
 	local $SIG{USR1} = sub {
 		fail('Shouldn\'t get a signal')
