@@ -1,5 +1,8 @@
 Revision history for POSIX-RT-Timer
 
+0.002   2010-06-14
+        Included ppport.h for compatibility with older versions of perl
+
 0.001   2010-06-14
         First version, released on an unsuspecting world.
 

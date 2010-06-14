@@ -8,7 +8,7 @@ use warnings FATAL => 'all';
 use XSLoader ();
 use POSIX    ();
 
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 XSLoader::load(__PACKAGE__, $VERSION);
 
 use POSIX::RT::Clock;
