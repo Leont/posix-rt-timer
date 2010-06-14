@@ -15,6 +15,9 @@ my $builder = Module::Build->new(
 		'Module::Build' => 0,
 		'Test::More'    => 0,
 	},
+	requires            => {
+		perl            => 5.008001,
+	},
     add_to_cleanup      => [ 'POSIX-RT-Timer-*' ],
     create_makefile_pl => 'traditional',
 );

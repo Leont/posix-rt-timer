@@ -1,6 +1,6 @@
 package POSIX::RT::Timer;
 
-use 5.008;
+use 5.008001;
 
 use strict;
 use warnings FATAL => 'all';
@@ -8,7 +8,6 @@ use warnings FATAL => 'all';
 use XSLoader ();
 use POSIX    ();
 use Carp     ();
-use Exporter 5.57 qw/import/;
 
 our $VERSION = '0.001';
 XSLoader::load(__PACKAGE__, $VERSION);
@@ -18,8 +17,7 @@ use POSIX::RT::Clock;
 sub new {
 	my ($class, %options) = @_;
 	my $clock = POSIX::RT::Clock->new(delete $options{clock} || 'realtime');
-	my $ret = $clock->timer(%options, class => $class);
-	return bless $ret, $class;
+	return $clock->timer(%options, class => $class);
 }
 
 1;    # End of POSIX::RT::Timer

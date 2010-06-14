@@ -226,6 +226,21 @@ SV* S_create_clock(pTHX_ clockid_t clockid, const char* class) {
 }
 #define create_clock(clockid, class) S_create_clock(aTHX_ clockid, class)
 
+int my_clock_nanosleep(pTHX_ clockid_t clockid, int flags, const struct timespec* request, struct timespec* remain) {
+	U32 saved = PL_signals;
+	int ret;
+	PL_signals |= PERL_SIGNALS_UNSAFE_FLAG;
+	ret = clock_nanosleep(clockid, flags, request, remain);
+	PL_signals = saved;
+	if (ret != 0 && ret != EINTR) {
+		errno = ret;
+		die_sys("Could not sleep: %s");
+	}
+	return ret;
+}
+
+#define clock_nanosleep(clockid, flags, request, remain) my_clock_nanosleep(aTHX_ clockid, flags, request, remain)
+
 MODULE = POSIX::RT::Timer				PACKAGE = POSIX::RT::Timer
 
 PROTOTYPES: DISABLED
@@ -412,37 +427,38 @@ sleep(self, frac_time, abstime = 0)
 	PREINIT:
 		clockid_t clockid;
 		struct timespec sleep_time, remain_time;
+		int flags;
 	CODE:
 		clockid = get_clock(self, "sleep");
+		flags = abstime ? TIMER_ABSTIME : 0;
 		nv_to_timespec(frac_time, &sleep_time);
-		if (abstime) {
-			if (clock_nanosleep(clockid, TIMER_ABSTIME, &sleep_time, NULL) == -1)
-				RETVAL = frac_time;
-			else
-				RETVAL = 0;
-		}
-		else {
-			if (clock_nanosleep(clockid, 0, &sleep_time, &remain_time) == -1)
-				RETVAL = timespec_to_nv(&remain_time);
-			else
-				RETVAL = 0;
-		}
+
+		if (clock_nanosleep(clockid, flags, &sleep_time, &remain_time) == EINTR)
+			RETVAL = abstime ? frac_time : timespec_to_nv(&remain_time);
+		else 
+			RETVAL = 0;
 	OUTPUT:
 		RETVAL
 
 NV
-sleep_deeply(self, frac_time)
+sleep_deeply(self, frac_time, abstime = 0)
 	SV* self;
 	NV frac_time;
+	int abstime;
 	PREINIT:
 		clockid_t clockid;
-		struct timespec sleep_time, remain_time;
-		NV realtime;
+		struct timespec sleep_time;
+		NV real_time;
 	CODE:
-		clockid = get_clock(self, "get_time");
-		if (clock_gettime(clockid, &time) == -1)
-			die_sys("Couldn't get time: %s");
-		realtime = timespec_to_nv(&time) + frac_time;
-		nv_to_timespec(frac_time, &sleep_time);
-			while (clock_nanosleep(clockid, TIMER_ABSTIME, &sleep_time, NULL) == -1);
+		clockid = get_clock(self, "sleep_deeply");
+		if (abstime)
+			nv_to_timespec(frac_time, &sleep_time);
+		else {
+			if (clock_gettime(clockid, &sleep_time) == -1)
+				die_sys("Couldn't get time: %s");
+			nv_to_timespec(timespec_to_nv(&sleep_time) + frac_time, &sleep_time);
+		}
+		while (clock_nanosleep(clockid, TIMER_ABSTIME, &sleep_time, NULL) == EINTR);
 		RETVAL = 0;
+	OUTPUT:
+		RETVAL

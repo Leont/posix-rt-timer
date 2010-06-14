@@ -2,10 +2,13 @@
 
 use strict;
 use warnings;
-use Test::More tests => 10;
+use Test::More tests => 14;
 use Test::Exception;
 
 use POSIX::RT::Clock;
+use Time::HiRes 'alarm';
+
+alarm 5;
 
 my $clock;
 lives_ok { $clock = POSIX::RT::Clock->new('realtime') } 'Can be created';
@@ -39,3 +42,11 @@ is($slept, 0, 'Slept all the time');
 cmp_ok($clock->get_time, '>', $time + 0.5, '0.5 seconds expired');
 
 is($clock->sleep($clock->get_time() + 0.5, 1), 0, 'Absolute sleep worked too');
+
+$time = $clock->get_time;
+local $SIG{ALRM} = sub { cmp_ok($clock->get_time, '>', $time + 0.2, 'sighandler called during sleep_deeply')};
+alarm 0.2;
+cmp_ok($clock->sleep(0.5), '>', 0.2, 'Sleeper interrupted');
+
+alarm 0.2;
+is($clock->sleep_deeply(0.5), 0, 'Deep sleeper continued');
