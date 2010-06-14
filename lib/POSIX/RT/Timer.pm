@@ -7,7 +7,6 @@ use warnings FATAL => 'all';
 
 use XSLoader ();
 use POSIX    ();
-use Carp     ();
 
 our $VERSION = '0.001';
 XSLoader::load(__PACKAGE__, $VERSION);

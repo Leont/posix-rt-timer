@@ -14,16 +14,15 @@ my $builder = Module::Build->new(
 		'ExtUtils::CBuilder' => 0,
 		'Module::Build' => 0,
 		'Test::More'    => 0,
+		'Test::Exception' => 0,
 	},
 	requires            => {
 		perl            => 5.008001,
 	},
     add_to_cleanup      => [ 'POSIX-RT-Timer-*' ],
-    create_makefile_pl => 'traditional',
+    create_makefile_pl  => 'small',
+	extra_linker_flags  => [ '-lrt' ],
+	sign                => 1,
 );
-
-if ($^O eq 'solaris' or $^O eq 'linux') {
-	$builder->extra_linker_flags('-lrt');
-}
 
 $builder->create_build_script();

@@ -4,6 +4,7 @@ use 5.008;
 
 use strict;
 use warnings FATAL => 'all';
+use Carp ();
 
 our $VERSION = '0.001';
 
