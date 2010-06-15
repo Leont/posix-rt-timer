@@ -426,7 +426,7 @@ get_resolution(self)
 		struct timespec time;
 	CODE:
 		clockid = get_clock(self, "get_resolution");
-		if (clock_gettime(clockid, &time) == -1)
+		if (clock_getres(clockid, &time) == -1)
 			die_sys("Couldn't get resolution: %s");
 		RETVAL = timespec_to_nv(&time);
 	OUTPUT:
