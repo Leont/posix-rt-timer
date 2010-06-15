@@ -6,7 +6,7 @@ use strict;
 use warnings FATAL => 'all';
 use Carp ();
 
-our $VERSION = '0.003';
+our $VERSION = '0.004';
 
 use POSIX::RT::Timer;
 

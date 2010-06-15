@@ -8,7 +8,7 @@ use warnings FATAL => 'all';
 use XSLoader ();
 use POSIX    ();
 
-our $VERSION = '0.003';
+our $VERSION = '0.004';
 XSLoader::load(__PACKAGE__, $VERSION);
 
 use POSIX::RT::Clock;
@@ -125,6 +125,8 @@ Leon Timmermans, C<< <leont at cpan.org> >>
 =head1 BUGS
 
 Perl can interact weirdly with signals. Beware of the dragons.
+
+POSIX::RT::Timer currently uses an unsafe signal handler for callback handlers.
 
 Please report any bugs or feature requests to C<bug-posix-rt-timer at rt.cpan.org>, or through
 the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=POSIX-RT-Timer>.  I will be notified, and then you'll
