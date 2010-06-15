@@ -274,7 +274,7 @@ get_timeout(self)
 		timer_t timer;
 		struct itimerspec value;
 	PPCODE:
-		timer = get_timer(self, "get_time");
+		timer = get_timer(self, "get_timeout");
 		if (timer_gettime(timer, &value) == -1)
 			die_sys("Couldn't get_time: %s");
 		mXPUSHn(timespec_to_nv(&value.it_value));
@@ -291,7 +291,7 @@ set_timeout(self, new_value, new_interval = 0, abstime = 0)
 		timer_t timer;
 		struct itimerspec new_itimer, old_itimer;
 	PPCODE:
-		timer = get_timer(self, "set_time");
+		timer = get_timer(self, "set_timeout");
 		nv_to_timespec(new_value, &new_itimer.it_value);
 		nv_to_timespec(new_interval, &new_itimer.it_interval);
 		if (timer_settime(timer, (abstime ? TIMER_ABSTIME : 0), &new_itimer, &old_itimer) == -1)

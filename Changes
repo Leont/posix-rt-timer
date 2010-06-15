@@ -3,6 +3,8 @@ Revision history for POSIX-RT-Timer
 0.004   2010-06-15
         Fixed a compilation issue on BSD
         Removed inappropriate pointer usage.
+        Fixed get_resolution
+        Added an example
 
 0.003   2010-06-14
         Fixed MANIFEST
