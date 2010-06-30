@@ -19,6 +19,9 @@
 #	define DEFAULT_SIGNO (SIGRTMIN + 3)
 #endif
 
+#if _XOPEN_SOURCE >= 600
+#define HAVE_CLOCK_NANOSLEEP
+#endif
 
 static void get_sys_error(char* buffer, size_t buffer_size) {
 #ifdef _GNU_SOURCE
@@ -239,6 +242,7 @@ SV* S_create_clock(pTHX_ clockid_t clockid, const char* class) {
 }
 #define create_clock(clockid, class) S_create_clock(aTHX_ clockid, class)
 
+#ifdef HAVE_CLOCK_NANOSLEEP
 int my_clock_nanosleep(pTHX_ clockid_t clockid, int flags, const struct timespec* request, struct timespec* remain) {
 	U32 saved = PL_signals;
 	int ret;
@@ -251,6 +255,7 @@ int my_clock_nanosleep(pTHX_ clockid_t clockid, int flags, const struct timespec
 	}
 	return ret;
 }
+#endif
 
 #define clock_nanosleep(clockid, flags, request, remain) my_clock_nanosleep(aTHX_ clockid, flags, request, remain)
 
@@ -432,6 +437,7 @@ get_resolution(self)
 	OUTPUT:
 		RETVAL
 
+#ifdef HAVE_CLOCK_NANOSLEEP
 NV
 sleep(self, frac_time, abstime = 0)
 	SV* self;
@@ -475,3 +481,5 @@ sleep_deeply(self, frac_time, abstime = 0)
 		RETVAL = 0;
 	OUTPUT:
 		RETVAL
+
+#endif
