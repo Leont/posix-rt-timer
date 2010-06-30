@@ -6,7 +6,7 @@ use strict;
 use warnings FATAL => 'all';
 use Carp ();
 
-our $VERSION = '0.004';
+our $VERSION = '0.005';
 
 use POSIX::RT::Timer;
 
@@ -47,7 +47,7 @@ POSIX::RT::Clock - POSIX real-time clocks
 
 =head1 VERSION
 
-Version 0.001
+Version 0.005
 
 =cut
 
@@ -128,11 +128,11 @@ Get the resolution of this clock.
 
 =item * sleep($time, $abstime = 0)
 
-Sleep a C<$time> seconds on this clock. Note that it is B<never> restarted after interruption by a signal handler. It returns the remaining time. $time and the return value are relative time unless C<$abstime> is true.
+Sleep a C<$time> seconds on this clock. Note that it is B<never> restarted after interruption by a signal handler. It returns the remaining time. $time and the return value are relative time unless C<$abstime> is true. This function may not be available on some operating systems.
 
 =item * sleep_deeply($time, $abstime = 0)
 
-Sleep a C<$time> seconds on this clock. Unlike C<sleep>, it will retry on interruption until the time has passed.
+Sleep a C<$time> seconds on this clock. Unlike C<sleep>, it will retry on interruption until the time has passed. This function may not be available on some operating systems.
 
 =item * timer(%options)
 

@@ -1,5 +1,10 @@
 Revision history for POSIX-RT-Timer
 
+0.005   2010-06039
+        Sleep is now only defined on systems having this functionality
+        Unit tests no longer use done_testing-style tests.
+        The callback doesn't get lost anymore on perl 5.8
+
 0.004   2010-06-15
         Fixed a compilation issue on BSD
         Removed inappropriate pointer usage.
@@ -14,4 +19,4 @@ Revision history for POSIX-RT-Timer
 
 0.001   2010-06-14
         First version, released on an unsuspecting world.
-
+ 
