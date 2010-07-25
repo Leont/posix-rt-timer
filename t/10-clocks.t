@@ -36,7 +36,7 @@ SKIP: {
 }
 
 SKIP: {
-	skip 'Doesn\'t have cpuclock', 1 if POSIX::RT::Clock->can('get_cpuclock');
+	skip 'Doesn\'t have cpuclock', 1 if not POSIX::RT::Clock->can('get_cpuclock');
 	lives_ok { POSIX::RT::Clock->get_cpuclock } 'Has cpuclock';
 }
 
