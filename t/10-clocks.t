@@ -41,7 +41,7 @@ SKIP: {
 }
 
 SKIP: {
-	skip 'Can\'t sleep, poor bastard', 6 if not $clock->can('sleep');
+	skip 'Can\'t sleep, poor bastard', 7 if not $clock->can('sleep');
 
 	my $slept = $clock->sleep(0.5);
 	is($slept, 0, 'Slept all the time');
