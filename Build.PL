@@ -19,7 +19,7 @@ my $builder = Module::Build->new(
 	build_requires      => {
 		'ExtUtils::CBuilder' => 0,
 		'Module::Build' => 0,
-		'Test::More'    => 0,
+		'Test::More'    => 0.82, #note()
 		'Test::Exception' => 0,
 	},
 	requires            => {
