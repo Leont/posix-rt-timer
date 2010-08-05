@@ -2,6 +2,7 @@ Build.PL
 Changes
 examples/clock_info.pl
 lib/POSIX/RT/Clock.pm
+lib/POSIX/RT/Clock_Timer.h
 lib/POSIX/RT/ppport.h
 lib/POSIX/RT/Timer.pm
 lib/POSIX/RT/Timer.xs
