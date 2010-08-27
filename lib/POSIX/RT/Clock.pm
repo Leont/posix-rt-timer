@@ -6,7 +6,7 @@ use strict;
 use warnings FATAL => 'all';
 use Carp ();
 
-our $VERSION = '0.006';
+our $VERSION = '0.007';
 
 use POSIX::RT::Timer;
 
@@ -47,7 +47,7 @@ POSIX::RT::Clock - POSIX real-time clocks
 
 =head1 VERSION
 
-Version 0.006
+Version 0.007
 
 =cut
 

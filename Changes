@@ -1,5 +1,10 @@
 Revision history for POSIX-RT-Timer
 
+0.007   2010-08-27
+        Fixed skipcount for sleep
+        Fixed dependency on Test::More 0.82
+        Split out some code into a header for potential split out of POSIX::RT::Clock
+
 0.006   2010-07-01
         Fixed up portability bug on non-linux
 
