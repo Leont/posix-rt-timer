@@ -181,11 +181,8 @@ SV* S_create_clock(pTHX_ clockid_t clockid, const char* class) {
 
 #ifdef HAVE_CLOCK_NANOSLEEP
 int my_clock_nanosleep(pTHX_ clockid_t clockid, int flags, const struct timespec* request, struct timespec* remain) {
-	U32 saved = PL_signals;
 	int ret;
-	PL_signals |= PERL_SIGNALS_UNSAFE_FLAG;
 	ret = clock_nanosleep(clockid, flags, request, remain);
-	PL_signals = saved;
 	if (ret != 0 && ret != EINTR) {
 		errno = ret;
 		die_sys("Could not sleep: %s");
