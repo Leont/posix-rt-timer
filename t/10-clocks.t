@@ -29,10 +29,11 @@ is $clocks{realtime}, 1, 'Realtime clock is supported';
 
 ok $clock->get_resolution, 'Can get resolution';
 
+my $monotonic;
 SKIP: {
 	skip 'No monotonic clock', 1 if not $clocks{monotonic};
-	my $new_clock = POSIX::RT::Clock->new('monotonic');
-	lives_ok { $new_clock->get_time() } "Monotonic clock seems to work";
+	$monotonic = POSIX::RT::Clock->new('monotonic');
+	lives_ok { $monotonic->get_time() } "Monotonic clock seems to work";
 }
 
 SKIP: {
@@ -43,19 +44,22 @@ SKIP: {
 SKIP: {
 	skip 'Can\'t sleep, poor bastard', 7 if not $clock->can('sleep');
 
-	my $slept = $clock->sleep(0.5);
+	my $sleeper = $clocks{monotonic} ? $monotonic : $clock;
+
+	$time = $sleeper->get_time;
+	my $slept = $sleeper->sleep(0.5);
 	is($slept, 0, 'Slept all the time');
 
-	cmp_ok($clock->get_time, '>', $time + 0.5, '0.5 seconds expired');
+	cmp_ok($sleeper->get_time, '>', $time + 0.5, '0.5 seconds expired');
+	$time = $sleeper->get_time;
 
-	is($clock->sleep($clock->get_time() + 0.5, 1), 0, 'Absolute sleep worked too');
+	is($sleeper->sleep($sleeper->get_time() + 0.5, 1), 0, 'Absolute sleep worked too');
 
-	$time = $clock->get_time;
-	local $SIG{ALRM} = sub { cmp_ok($clock->get_time, '>', $time + 0.2, 'sighandler called during sleep_deeply')};
+	local $SIG{ALRM} = sub { cmp_ok($sleeper->get_time, '>', $time + 0.2, 'sighandler called during sleep_deeply')};
 	alarm 0.2;
-	cmp_ok($clock->sleep(0.5), '>', 0.2, 'Sleeper interrupted');
+	cmp_ok($sleeper->sleep(0.5), '>', 0.2, 'Sleeper interrupted');
 
 	alarm 0.2;
-	is($clock->sleep_deeply(0.5), 0, 'Deep sleeper continued');
+	is($sleeper->sleep_deeply(0.5), 0, 'Deep sleeper continued');
 }
 
