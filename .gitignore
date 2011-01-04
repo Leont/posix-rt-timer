@@ -14,4 +14,4 @@ POSIX-RT-Timer-*
 *.c
 .*.swp
 Makefile.PL
-META.yml
+*META.yml
