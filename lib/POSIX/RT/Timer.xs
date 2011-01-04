@@ -32,6 +32,7 @@ int S_get_signo(pTHX) {
 #define get_signo() S_get_signo(aTHX)
 
 static void init_event(struct sigevent* event, int signo, void* ptr) {
+	memset(event, 0, sizeof(struct sigevent));
 	event->sigev_notify          = SIGEV_SIGNAL;
 	event->sigev_signo           = signo;
 	event->sigev_value.sival_ptr = ptr;
