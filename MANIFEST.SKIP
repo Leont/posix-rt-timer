@@ -11,3 +11,4 @@ POSIX-RT-Timer-.*
 ^\.git
 ^lib/.*\.c$
 ^lib/.*\.o$
+^MYMETA.yml$

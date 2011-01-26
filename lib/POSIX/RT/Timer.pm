@@ -8,7 +8,7 @@ use warnings FATAL => 'all';
 use XSLoader ();
 use POSIX    ();
 
-our $VERSION = '0.008';
+our $VERSION = '0.009';
 XSLoader::load(__PACKAGE__, $VERSION);
 
 use POSIX::RT::Clock;
@@ -29,7 +29,7 @@ POSIX::RT::Timer - POSIX real-time timers
 
 =head1 VERSION
 
-Version 0.008
+Version 0.009
 
 =cut
 
