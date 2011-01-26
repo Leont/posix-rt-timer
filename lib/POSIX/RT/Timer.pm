@@ -80,6 +80,8 @@ The signal number to send a signal to on timer expiration.
 
 =item * callback
 
+B<This has been disabled for now, and may be permanently removed> because it turns out to be unportable and unstable.
+
 The callback to call on timer expiration. The callback will receive the timer as its only arguments.
 
 =back

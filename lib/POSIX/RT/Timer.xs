@@ -38,15 +38,6 @@ static void init_event(struct sigevent* event, int signo, void* ptr) {
 	event->sigev_value.sival_ptr = ptr;
 }
 
-CV* create_callback(pTHX_ SV* arg) {
-	HV* stash;
-	GV* gv;
-	CV* ret = sv_2cv(arg, &stash, &gv, 0);
-	if (!ret)
-		Perl_croak(aTHX_ "Can't make a codeval out of %s", SvPV_nolen(arg));
-	return ret;
-}
-
 static MAGIC* S_get_magic(pTHX_ SV* ref, const char* funcname) {
 	SV* value;
 	MAGIC* magic;
@@ -65,74 +56,6 @@ static clockid_t S_get_clock(pTHX_ SV* ref, const char* funcname) {
 }
 #define get_clock(ref, func) S_get_clock(aTHX_ ref, func)
 
-XS(callback) {
-#ifdef dVAR
-    dVAR; dXSARGS;
-#else
-    dXSARGS;
-#endif
-    PERL_UNUSED_VAR(cv); /* -W */
-    PERL_UNUSED_VAR(ax); /* -Wall */
-
-	SV* signal = ST(0);
-	SV* action = ST(2);
-    SP -= items;
-
-	siginfo_t* info = (siginfo_t*) SvPV_nolen(action);
-	SV* timer = (SV*)info->si_value.sival_ptr;
-	if (timer != 0) {
-		MAGIC* magic = mg_find(timer, PERL_MAGIC_ext);
-		SV* callback = (SV*) magic->mg_obj;
-		PUSHMARK(SP);
-		mXPUSHs(newRV_inc(timer));
-		PUTBACK;
-		call_sv(callback, GIMME_V);
-		SPAGAIN;
-	}
-	else
-		Perl_warn(aTHX_ "Got a signal without a value on slot %d\n", info->si_signo);
-	PUTBACK;
-}
-
-void register_callback(pTHX) {
-	dSP;
-
-	CV* callback_cv = newXS("", callback, __FILE__);
-	ENTER;
-	SAVETMPS;
-	
-	PUSHMARK(SP);
-	mXPUSHp("POSIX::SigSet", 13);
-	PUTBACK;
-	call_method("new", G_SCALAR);
-	SPAGAIN;
-	SV* sigset = POPs;
-
-#if PERL_VERSION < 10
-	SvREFCNT_inc((SV*)callback_cv);
-#endif	
-
-	PUSHMARK(SP);
-	mXPUSHp("POSIX::SigAction", 16);
-	mXPUSHs(newRV_noinc((SV*)callback_cv));
-	XPUSHs(sigset);
-	mXPUSHi(SA_SIGINFO);
-	PUTBACK;
-	call_method("new", G_SCALAR);
-	SPAGAIN;
-	SV* sigaction = POPs;
-
-	PUSHMARK(SP);
-	mXPUSHi(get_signo());
-	XPUSHs(sigaction);
-	PUTBACK;
-	call_pv("POSIX::sigaction", G_VOID | G_DISCARD);
-	SPAGAIN;
-
-	FREETMPS;
-	LEAVE;
-}
-
 int timer_destroy(pTHX_ SV* var, MAGIC* magic) {
 	if (timer_delete(*(timer_t*)magic->mg_ptr))
 		die_sys("Can't delete timer: %s");
@@ -145,7 +68,6 @@ SV* S_create_timer(pTHX_ const char* class, clockid_t clockid, const char* type,
 	timer_t timer;
 	SV *tmp;
 	SV* retval;
-	CV* callback;
 
 	tmp = newSV(0);
 	retval = sv_2mortal(sv_bless(newRV_noinc(tmp), gv_stashpv(class, 0)));
@@ -153,18 +75,16 @@ SV* S_create_timer(pTHX_ const char* class, clockid_t clockid, const char* type,
 
 	if (strEQ(type, "signal")) {
 		init_event(&event, SvIV(arg), NULL);
-		callback = NULL;
 	}
 	else if (strEQ(type, "callback")) {
-		init_event(&event, get_signo(), tmp);
-		callback = create_callback(aTHX_ arg);
+		Perl_croak(aTHX_ "callback no longer supported");
 	}
 	else
 		Perl_croak(aTHX_ "Unknown type '%s'", type);
 
 	if (timer_create(clockid, &event, &timer) == -1) 
 		die_sys("Couldn't create timer: %s");
-	MAGIC* magic = sv_magicext(tmp, (SV*)callback, PERL_MAGIC_ext, &timer_magic, (const char*)&timer, sizeof timer);
+	MAGIC* magic = sv_magicext(tmp, NULL, PERL_MAGIC_ext, &timer_magic, (const char*)&timer, sizeof timer);
 
 	return retval;
 }
@@ -198,15 +118,6 @@ MODULE = POSIX::RT::Timer				PACKAGE = POSIX::RT::Timer
 
 PROTOTYPES: DISABLED
 
-BOOT:
-	SV* signo = get_sv("POSIX::RT::Timer::SIGNO", GV_ADD | GV_ADDMULTI);
-	if (!SvOK(signo))
-		sv_setiv(signo, DEFAULT_SIGNO);
-	SvREADONLY_on(signo);
-	hv_store(PL_modglobal, "POSIX::RT::Timer::SIGNO", 23, newSVsv(signo), 0);
-	
-	register_callback(aTHX);
-
 void
 get_timeout(self)
 	SV* self;
@@ -239,35 +150,6 @@ set_timeout(self, new_value, new_interval = 0, abstime = 0)
 		mXPUSHn(timespec_to_nv(&old_itimer.it_value));
 		if (GIMME_V == G_ARRAY)
 			mXPUSHn(timespec_to_nv(&old_itimer.it_interval));
-
-SV*
-get_callback(self)
-	SV* self;
-	PREINIT:
-	MAGIC* magic;
-	CODE:
-		magic = get_magic(self, "get_callback");
-		if (magic->mg_obj) 
-			RETVAL = SvREFCNT_inc(magic->mg_obj);
-		else
-			RETVAL = &PL_sv_undef;
-	OUTPUT:
-		RETVAL
-
-SV*
-set_callback(self, callback)
-	SV* self;
-	SV* callback;
-	PREINIT:
-	MAGIC* magic;
-	CODE:
-		magic = get_magic(self, "set_callback");
-		if (!magic->mg_obj)
-			Perl_croak(aTHX_ "Can't set callback for this timer object");
-		RETVAL = magic->mg_obj;
-		magic->mg_obj = SvREFCNT_inc((SV*)create_callback(aTHX_ callback));
-	OUTPUT:
-		RETVAL
 
 IV
 get_overrun(self)
