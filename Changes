@@ -1,37 +1,39 @@
 Revision history for POSIX-RT-Timer
 
-0.009   2011-01-25
-        Removed callbacks, as they are too unportable and unstable
+{{$NEXT}}
 
-0.008   2010-09-03
-        Disabled unsafe signals during sleep to satisfy x86
-        Added license file
+0.009    2011-01-25
+         Removed callbacks, as they are too unportable and unstable
 
-0.007   2010-08-27
-        Fixed skipcount for sleep
-        Fixed dependency on Test::More 0.82
-        Split out some code into a header for potential split out of POSIX::RT::Clock
+0.008    2010-09-03
+         Disabled unsafe signals during sleep to satisfy x86
+         Added license file
 
-0.006   2010-07-01
-        Fixed up portability bug on non-linux
+0.007    2010-08-27
+         Fixed skipcount for sleep
+         Fixed dependency on Test::More 0.82
+         Split out some code into a header for potential split out of POSIX::RT::Clock
 
-0.005   2010-06-30
-        Sleep is now only defined on systems having this functionality
-        Unit tests no longer use done_testing-style tests.
-        The callback doesn't get lost anymore on perl 5.8
+0.006    2010-07-01
+         Fixed up portability bug on non-linux
 
-0.004   2010-06-15
-        Fixed a compilation issue on BSD
-        Removed inappropriate pointer usage.
-        Fixed get_resolution
-        Added an example
+0.005    2010-06-30
+         Sleep is now only defined on systems having this functionality
+         Unit tests no longer use done_testing-style tests.
+         The callback doesn't get lost anymore on perl 5.8
 
-0.003   2010-06-14
-        Fixed MANIFEST
+0.004    2010-06-15
+         Fixed a compilation issue on BSD
+         Removed inappropriate pointer usage.
+         Fixed get_resolution
+         Added an example
 
-0.002   2010-06-14
-        Included ppport.h for compatibility with older versions of perl
+0.003    2010-06-14
+         Fixed MANIFEST
 
-0.001   2010-06-14
-        First version, released on an unsuspecting world.
+0.002    2010-06-14
+         Included ppport.h for compatibility with older versions of perl
+
+0.001    2010-06-14
+         First version, released on an unsuspecting world.
 
