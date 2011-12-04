@@ -37,17 +37,9 @@ sub timer {
 
 1;    # End of POSIX::RT::Clock
 
+#ABSTRACT: POSIX real-time clocks
+
 __END__
-
-=head1 NAME
-
-POSIX::RT::Clock - POSIX real-time clocks
-
-=head1 VERSION
-
-Version 0.009
-
-=cut
 
 =head1 SYNOPSIS
 
@@ -137,53 +129,5 @@ Sleep a C<$time> seconds on this clock. Unlike C<sleep>, it will retry on interr
 Create a timer based on this clock. All arguments except C<clock> as the same as in C<POSIX::RT::Timer::new>.
 
 =back
-
-=head1 AUTHOR
-
-Leon Timmermans, C<< <leont at cpan.org> >>
-
-=head1 BUGS
-
-Please report any bugs or feature requests to C<bug-posix-rt-timer at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=POSIX-RT-Timer>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-    perldoc POSIX::RT::Clock
-
-You can also look for information at:
-
-=over 4
-
-=item * RT: CPAN's request tracker
-
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=POSIX-RT-Timer>
-
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/POSIX-RT-Timer>
-
-=item * CPAN Ratings
-
-L<http://cpanratings.perl.org/d/POSIX-RT-Timer>
-
-=item * Search CPAN
-
-L<http://search.cpan.org/dist/POSIX-RT-Timer/>
-
-=back
-
-=head1 LICENSE AND COPYRIGHT
-
-Copyright 2010 Leon Timmermans.
-
-This program is free software; you can redistribute it and/or modify it
-under the terms of either: the GNU General Public License as published
-by the Free Software Foundation; or the Artistic License.
-
-See http://dev.perl.org/licenses/ for more information.
 
 =cut
