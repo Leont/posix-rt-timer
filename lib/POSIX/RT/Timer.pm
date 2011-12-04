@@ -10,12 +10,19 @@ use POSIX    ();
 
 XSLoader::load(__PACKAGE__, __PACKAGE__->VERSION);
 
-use POSIX::RT::Clock;
-
 sub new {
-	my ($class, %options) = @_;
-	my $clock = POSIX::RT::Clock->new(delete $options{clock} || 'realtime');
-	return $clock->timer(%options, class => $class);
+	my ($class, %args) = @_;
+
+	my %options = (
+		interval => 0,
+		value    => 0,
+		clock    => 'realtime',
+		ident    => 0,
+		%args,
+	);
+	my $ret = $class->_new(@options{qw/clock signal ident/});
+	$ret->set_timeout(@options{ 'value', 'interval' });
+	return $ret;
 }
 
 1;    # End of POSIX::RT::Timer
@@ -58,7 +65,7 @@ The value the timer is set to after expiration. If this is set to 0, it is a one
 
 =item * clock = 'realtime'
 
-The type of clock
+The type of clock. This must either be the stringname of a supported clock or a L<POSIX::RT::Clock|POSIX::RT::Clock> object.
 
 =item * signal
 

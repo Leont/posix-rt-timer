@@ -9,16 +9,8 @@ use Carp ();
 use POSIX::RT::Timer;
 
 sub timer {
-	my ($class, %args) = @_;
-	my %options = (
-		interval => 0,
-		value    => 0,
-		class    => 'POSIX::RT::Timer',
-		%args,
-	);
-	my $ret = $class->_timer($options{class}, $options{signal}, $options{ident} || 0);
-	$ret->set_timeout(@options{ 'value', 'interval' });
-	return $ret;
+	my ($self, %options) = @_;
+	return POSIX::RT::Timer->new(%options, clock => $self);
 }
 
 1;    # End of POSIX::RT::Clock

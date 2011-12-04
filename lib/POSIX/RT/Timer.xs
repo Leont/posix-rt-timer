@@ -97,6 +97,19 @@ MODULE = POSIX::RT::Timer				PACKAGE = POSIX::RT::Timer
 PROTOTYPES: DISABLED
 
 void
+_new(class, clock, signo, id)
+	const char* class;
+	SV* clock;
+	IV signo;
+	IV id;
+	PREINIT:
+		clockid_t clockid;
+	PPCODE:
+		clockid = SvROK(clock) ? get_clock(clock, "create timer") : get_clockid(SvPV_nolen(clock));
+		XPUSHs(create_timer(class, clockid, signo, id));
+
+
+void
 get_timeout(self)
 	SV* self;
 	PREINIT:
@@ -181,15 +194,6 @@ get_clocks(class)
 		for (i = 0; i < max; ++i)
 			mXPUSHp(clocks[i].key, strlen(clocks[i].key));
 		XSRETURN(max);
-
-void
-_timer(self, class, arg, id)
-	SV* self;
-	const char* class;
-	IV arg;
-	IV id;
-	PPCODE:
-		XPUSHs(create_timer(class, get_clock(self, "timer"), arg, id));
 
 NV
 get_time(self)
