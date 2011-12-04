@@ -8,20 +8,6 @@ use Carp ();
 
 use POSIX::RT::Timer;
 
-sub _get_args {
-	my %options = @_;
-	Carp::croak('no time defined') if not defined $options{value};
-	if (defined $options{callback}) {
-		return (callback => $options{callback});
-	}
-	elsif (defined $options{signal}) {
-		return (signal => $options{signal});
-	}
-	else {
-		Carp::croak('Unknown type');
-	}
-}
-
 sub timer {
 	my ($class, %args) = @_;
 	my %options = (
@@ -30,7 +16,7 @@ sub timer {
 		class    => 'POSIX::RT::Timer',
 		%args,
 	);
-	my $ret = $class->_timer($options{class}, _get_args(%options));
+	my $ret = $class->_timer($options{class}, $options{signal}, $options{ident} || 0);
 	$ret->set_timeout(@options{ 'value', 'interval' });
 	return $ret;
 }

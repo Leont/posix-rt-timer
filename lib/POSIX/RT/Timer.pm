@@ -28,18 +28,13 @@ __END__
 
  use POSIX::RT::Timer;
 
- my $timer = POSIX::RT::Timer->new(value => 1, callback => sub {
-     my $timer = shift;
-	 # do something
- });
+ my $timer = POSIX::RT::Timer->new(value => 1, signal => $signo, id => 42);
 
 =head1 DESCRIPTION
 
-This module provides for timers. Unlike getitimer/setitimer an arbitrary number of timers is supported. There are two kinds of timers: signal timers and callback timers.
+This module provides for timers. Unlike getitimer/setitimer an arbitrary number of timers is supported.
 
 Signal timers send a signal to the process, much like itimers. You can specify which signal is sent, using realtime signals is recommended.
-
-Callback timers call a callback on expiration. They are actually implemented by a signal handler on C<$POSIX::RT::Timer::SIGNO>. The value of this variable can be set B<before> loading this module. Callbacks are called with the timer as their only argument.
 
 =head1 METHODS
 
@@ -69,19 +64,11 @@ The type of clock
 
 The signal number to send a signal to on timer expiration.
 
-=item * callback
+=item * id
 
-B<This has been disabled for now, and may be permanently removed> because it turns out to be unportable and unstable.
-
-The callback to call on timer expiration. The callback will receive the timer as its only arguments.
+An integer identifier added to the signal. Do note that perl's default signal handling throws away this information. You'll have to use either unsafe signals, with a risk of crashing your program, or a synchronous signal receiving mechanism (such as L<POSIX::RT::Signal|POSIX::RT::Signal> or L<Linux::FD::Signal|Linux::FD::Signal>), which may ruin your reason for using timers. YMMV.
 
 =back
-
-Signal and callback options are mutually exclusive. It is mandatory to set one of these. Signal timers can not be converted into callback timers or reverse.
-
-=item * get_clocks()
-
-Get a list of all supported clocks by their names.
 
 =back
 
@@ -100,14 +87,6 @@ Set the timer and interval values. If C<$abstime> is true, they are absolute val
 =item * get_overrun()
 
 Get the overrun count for the timer. The timer overrun count is the number of additional timer expirations that occurred since the signal was sent.
-
-=item * get_callback()
-
-Get the callback function.
-
-=item * set_callback($callback)
-
-Set the callback function.
 
 =back
 

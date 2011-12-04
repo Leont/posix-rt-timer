@@ -15,28 +15,11 @@
 #include <signal.h>
 #include <time.h>
 
-#ifndef DEFAULT_SIGNO
-#	define DEFAULT_SIGNO (SIGRTMIN + 3)
-#endif
-
 #if _XOPEN_SOURCE >= 600
 #define HAVE_CLOCK_NANOSLEEP
 #endif
 
 #include "Clock_Timer.h"
-
-int S_get_signo(pTHX) {
-	SV** tmp = hv_fetch(PL_modglobal, "POSIX::RT::Timer::SIGNO", 23, FALSE);
-	return SvIV(*tmp);
-}
-#define get_signo() S_get_signo(aTHX)
-
-static void init_event(struct sigevent* event, int signo, void* ptr) {
-	memset(event, 0, sizeof(struct sigevent));
-	event->sigev_notify          = SIGEV_SIGNAL;
-	event->sigev_signo           = signo;
-	event->sigev_value.sival_ptr = ptr;
-}
 
 static MAGIC* S_get_magic(pTHX_ SV* ref, const char* funcname) {
 	SV* value;
@@ -63,24 +46,19 @@ int timer_destroy(pTHX_ SV* var, MAGIC* magic) {
 
 MGVTBL timer_magic = { NULL, NULL, NULL, NULL, timer_destroy };
 
-SV* S_create_timer(pTHX_ const char* class, clockid_t clockid, const char* type, SV* arg) {
+SV* S_create_timer(pTHX_ const char* class, clockid_t clockid, int signo, IV id) {
 	struct sigevent event;
 	timer_t timer;
-	SV *tmp;
-	SV* retval;
+	SV *tmp, *retval;
 
 	tmp = newSV(0);
 	retval = sv_2mortal(sv_bless(newRV_noinc(tmp), gv_stashpv(class, 0)));
 	SvREADONLY_on(tmp);
 
-	if (strEQ(type, "signal")) {
-		init_event(&event, SvIV(arg), NULL);
-	}
-	else if (strEQ(type, "callback")) {
-		Perl_croak(aTHX_ "callback no longer supported");
-	}
-	else
-		Perl_croak(aTHX_ "Unknown type '%s'", type);
+	memset(&event, 0, sizeof(struct sigevent));
+	event.sigev_notify          = SIGEV_SIGNAL;
+	event.sigev_signo           = signo;
+	event.sigev_value.sival_int = id;
 
 	if (timer_create(clockid, &event, &timer) == -1) 
 		die_sys("Couldn't create timer: %s");
@@ -88,7 +66,7 @@ SV* S_create_timer(pTHX_ const char* class, clockid_t clockid, const char* type,
 
 	return retval;
 }
-#define create_timer(class, clockid, type, arg) S_create_timer(aTHX_ class, clockid, type, arg)
+#define create_timer(class, clockid, arg, id) S_create_timer(aTHX_ class, clockid, arg, id)
 
 SV* S_create_clock(pTHX_ clockid_t clockid, const char* class) {
 	SV *tmp, *retval;
@@ -205,13 +183,13 @@ get_clocks(class)
 		XSRETURN(max);
 
 void
-_timer(self, class, type, arg)
+_timer(self, class, arg, id)
 	SV* self;
 	const char* class;
-	const char* type;
-	SV* arg;
+	IV arg;
+	IV id;
 	PPCODE:
-		XPUSHs(create_timer(class, get_clock(self, "timer"), type, arg));
+		XPUSHs(create_timer(class, get_clock(self, "timer"), arg, id));
 
 NV
 get_time(self)
