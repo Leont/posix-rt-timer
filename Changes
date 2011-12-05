@@ -1,9 +1,10 @@
 Revision history for POSIX-RT-Timer
 
 {{$NEXT}}
+          Add missing configure dependency
 
 0.010     2011-12-04 13:49:13 Europe/Amsterdam
-         Removed all remains of callback, added optional identifiers instead.
+          Removed all remains of callback, added optional identifiers instead.
 
 0.009    2011-01-25
          Removed callbacks, as they are too unportable and unstable
