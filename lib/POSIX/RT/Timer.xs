@@ -39,14 +39,14 @@ static clockid_t S_get_clock(pTHX_ SV* ref, const char* funcname) {
 }
 #define get_clock(ref, func) S_get_clock(aTHX_ ref, func)
 
-int timer_destroy(pTHX_ SV* var, MAGIC* magic) {
+static int timer_destroy(pTHX_ SV* var, MAGIC* magic) {
 	if (timer_delete(*(timer_t*)magic->mg_ptr))
 		die_sys("Can't delete timer: %s");
 }
 
 MGVTBL timer_magic = { NULL, NULL, NULL, NULL, timer_destroy };
 
-SV* S_create_timer(pTHX_ const char* class, clockid_t clockid, int signo, IV id) {
+static SV* S_create_timer(pTHX_ const char* class, clockid_t clockid, int signo, IV id) {
 	struct sigevent event;
 	timer_t timer;
 	SV *tmp, *retval;
@@ -68,7 +68,7 @@ SV* S_create_timer(pTHX_ const char* class, clockid_t clockid, int signo, IV id)
 }
 #define create_timer(class, clockid, arg, id) S_create_timer(aTHX_ class, clockid, arg, id)
 
-SV* S_create_clock(pTHX_ clockid_t clockid, const char* class) {
+static SV* S_create_clock(pTHX_ clockid_t clockid, const char* class) {
 	SV *tmp, *retval;
 	tmp = newSViv(clockid);
 	retval = newRV_noinc(tmp);
@@ -79,7 +79,7 @@ SV* S_create_clock(pTHX_ clockid_t clockid, const char* class) {
 #define create_clock(clockid, class) S_create_clock(aTHX_ clockid, class)
 
 #ifdef HAVE_CLOCK_NANOSLEEP
-int my_clock_nanosleep(pTHX_ clockid_t clockid, int flags, const struct timespec* request, struct timespec* remain) {
+static int my_clock_nanosleep(pTHX_ clockid_t clockid, int flags, const struct timespec* request, struct timespec* remain) {
 	int ret;
 	ret = clock_nanosleep(clockid, flags, request, remain);
 	if (ret != 0 && ret != EINTR) {
