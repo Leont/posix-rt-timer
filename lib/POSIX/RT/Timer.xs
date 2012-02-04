@@ -88,6 +88,25 @@ static int my_clock_nanosleep(pTHX_ clockid_t clockid, int flags, const struct t
 
 #define clock_nanosleep(clockid, flags, request, remain) my_clock_nanosleep(aTHX_ clockid, flags, request, remain)
 
+#if defined(USE_ITHREADS) && defined(_POSIX_THREAD_CPUTIME)
+static pthread_t* S_get_pthread(pTHX_ SV* thread_handle) {
+	SV* tmp;
+	pthread_t* ret;
+	dSP;
+	PUSHMARK(SP);
+	PUSHs(thread_handle);
+	PUTBACK;
+	call_method("_handle", G_SCALAR);
+	SPAGAIN;
+	tmp = POPs;
+	ret = INT2PTR(pthread_t* ,SvUV(tmp));
+	return ret;
+}
+#define get_pthread(handle) S_get_pthread(aTHX_ handle)
+#endif
+
+#define undef &PL_sv_undef
+
 MODULE = POSIX::RT::Timer				PACKAGE = POSIX::RT::Timer
 
 PROTOTYPES: DISABLED
@@ -166,14 +185,26 @@ new(class, clock_type)
 
 #ifdef _POSIX_CPUTIME
 SV*
-get_cpuclock(class, pid = 0)
+get_cpuclock(class, pid = undef)
 	const char* class;
-	IV pid;
+	SV* pid;
 	PREINIT:
 		clockid_t clockid;
 	CODE:
-		if (clock_getcpuclockid(pid, &clockid) != 0)
-			die_sys("Could not get cpuclock");
+		if (SvOK(pid) && SvROK(pid) && sv_derived_from(pid, "threads")) {
+#if defined(USE_ITHREADS) && defined(_POSIX_THREAD_CPUTIME)
+			pthread_t* handle = get_pthread(pid);
+			if (pthread_getcpuclockid(*handle, &clockid) != 0)
+				die_sys("Could not get cpuclock");
+#else
+			Perl_croak(aTHX_ "Can't get CPU time for threads");
+#endif
+		}
+		else {
+			if (clock_getcpuclockid(SvOK(pid) ? SvIV(pid) : 0, &clockid) != 0)
+				die_sys("Could not get cpuclock");
+		}
+		
 		RETVAL = create_clock(clockid, class);
 	OUTPUT:
 		RETVAL

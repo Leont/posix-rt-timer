@@ -1,6 +1,7 @@
 Revision history for POSIX-RT-Timer
 
 {{$NEXT}}
+          Allow per thread cpu-clocks
 
 0.011     2011-12-06 19:01:36 Europe/Amsterdam
           Add missing configure dependency

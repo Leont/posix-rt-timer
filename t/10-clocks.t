@@ -2,7 +2,8 @@
 
 use strict;
 use warnings;
-use Test::More tests => 15;
+use Config;
+use Test::More tests => 16;
 use Test::Exception;
 
 use POSIX::RT::Clock;
@@ -37,8 +38,11 @@ SKIP: {
 }
 
 SKIP: {
-	skip 'Doesn\'t have cpuclock', 1 if not POSIX::RT::Clock->can('get_cpuclock');
-	lives_ok { POSIX::RT::Clock->get_cpuclock } 'Has cpuclock';
+	skip 'Doesn\'t have cpuclock', 2 if not POSIX::RT::Clock->can('get_cpuclock');
+	lives_ok { POSIX::RT::Clock->get_cpuclock($$) } 'Has cpuclock';
+	skip 'Doesn\'t have threads', 1 if not $Config{useithreads};
+	require threads;
+	lives_ok { POSIX::RT::Clock->get_cpuclock(threads->self) } 'Has cpuclock';
 }
 
 SKIP: {
