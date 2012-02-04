@@ -1,6 +1,8 @@
 Revision history for POSIX-RT-Timer
 
 {{$NEXT}}
+
+0.012     2012-02-04 16:43:09 Europe/Amsterdam
           Allow per thread cpu-clocks
 
 0.011     2011-12-06 19:01:36 Europe/Amsterdam
