@@ -4,7 +4,6 @@ use 5.008;
 
 use strict;
 use warnings FATAL => 'all';
-use Carp ();
 
 use POSIX::RT::Timer;
 

@@ -6,7 +6,6 @@ use strict;
 use warnings FATAL => 'all';
 
 use XSLoader ();
-use POSIX    ();
 
 XSLoader::load(__PACKAGE__, __PACKAGE__->VERSION);
 
