@@ -15,10 +15,6 @@
 #include <signal.h>
 #include <time.h>
 
-#if _XOPEN_SOURCE >= 600
-#define HAVE_CLOCK_NANOSLEEP
-#endif
-
 #include "Clock_Timer.h"
 
 static MAGIC* S_get_magic(pTHX_ SV* ref, const char* funcname) {
@@ -78,7 +74,7 @@ static SV* S_create_clock(pTHX_ clockid_t clockid, const char* class) {
 }
 #define create_clock(clockid, class) S_create_clock(aTHX_ clockid, class)
 
-#ifdef HAVE_CLOCK_NANOSLEEP
+#ifdef _POSIX_CLOCK_SELECTION
 static int my_clock_nanosleep(pTHX_ clockid_t clockid, int flags, const struct timespec* request, struct timespec* remain) {
 	int ret;
 	ret = clock_nanosleep(clockid, flags, request, remain);
@@ -168,7 +164,7 @@ new(class, clock_type)
 	OUTPUT:
 		RETVAL
 
-#ifdef linux
+#ifdef _POSIX_CPUTIME
 SV*
 get_cpuclock(class, pid = 0)
 	const char* class;
@@ -236,7 +232,7 @@ get_resolution(self)
 	OUTPUT:
 		RETVAL
 
-#ifdef HAVE_CLOCK_NANOSLEEP
+#ifdef _POSIX_CLOCK_SELECTION
 NV
 sleep(self, frac_time, abstime = 0)
 	SV* self;
