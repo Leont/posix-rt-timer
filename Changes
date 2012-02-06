@@ -1,6 +1,8 @@
 Revision history for POSIX-RT-Timer
 
 {{$NEXT}}
+
+0.013     2012-02-06 23:48:34 Europe/Amsterdam
           Detect presence or absence of POSIX option groups more correctly
 
 0.012     2012-02-04 16:43:09 Europe/Amsterdam
