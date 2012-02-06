@@ -74,7 +74,7 @@ static SV* S_create_clock(pTHX_ clockid_t clockid, const char* class) {
 }
 #define create_clock(clockid, class) S_create_clock(aTHX_ clockid, class)
 
-#ifdef _POSIX_CLOCK_SELECTION
+#if defined(_POSIX_CLOCK_SELECTION) && _POSIX_CLOCK_SELECTION >= 0
 static int my_clock_nanosleep(pTHX_ clockid_t clockid, int flags, const struct timespec* request, struct timespec* remain) {
 	int ret;
 	ret = clock_nanosleep(clockid, flags, request, remain);
@@ -88,7 +88,7 @@ static int my_clock_nanosleep(pTHX_ clockid_t clockid, int flags, const struct t
 
 #define clock_nanosleep(clockid, flags, request, remain) my_clock_nanosleep(aTHX_ clockid, flags, request, remain)
 
-#if defined(USE_ITHREADS) && defined(_POSIX_THREAD_CPUTIME)
+#if defined(USE_ITHREADS) && defined(_POSIX_THREAD_CPUTIME) && _POSIX_THREAD_CPUTIME >= 0
 static pthread_t* S_get_pthread(pTHX_ SV* thread_handle) {
 	SV* tmp;
 	pthread_t* ret;
@@ -183,7 +183,7 @@ new(class, clock_type)
 	OUTPUT:
 		RETVAL
 
-#ifdef _POSIX_CPUTIME
+#if defined(_POSIX_CPUTIME) && _POSIX_CPUTIME >= 0
 SV*
 get_cpuclock(class, pid = undef)
 	const char* class;
@@ -192,7 +192,7 @@ get_cpuclock(class, pid = undef)
 		clockid_t clockid;
 	CODE:
 		if (SvOK(pid) && SvROK(pid) && sv_derived_from(pid, "threads")) {
-#if defined(USE_ITHREADS) && defined(_POSIX_THREAD_CPUTIME)
+#if defined(USE_ITHREADS) && defined(_POSIX_THREAD_CPUTIME) && _POSIX_THREAD_CPUTIME >= 0
 			pthread_t* handle = get_pthread(pid);
 			if (pthread_getcpuclockid(*handle, &clockid) != 0)
 				die_sys("Could not get cpuclock");
@@ -263,7 +263,7 @@ get_resolution(self)
 	OUTPUT:
 		RETVAL
 
-#ifdef _POSIX_CLOCK_SELECTION
+#if defined(_POSIX_CLOCK_SELECTION) && _POSIX_CLOCK_SELECTION >= 0
 NV
 sleep(self, frac_time, abstime = 0)
 	SV* self;

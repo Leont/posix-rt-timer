@@ -1,6 +1,7 @@
 Revision history for POSIX-RT-Timer
 
 {{$NEXT}}
+          Detect presence or absence of POSIX option groups more correctly
 
 0.012     2012-02-04 16:43:09 Europe/Amsterdam
           Allow per thread cpu-clocks
