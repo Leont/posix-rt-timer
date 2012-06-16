@@ -36,7 +36,7 @@ use POSIX qw/SIGUSR1 pause/;
 	alarm 0;
 }
 
-my $hasmodules = eval { require POSIX::RT::Signal; require Signal::Mask; 1 };
+my $hasmodules = eval { require POSIX::RT::Signal; require Signal::Mask; POSIX::RT::Signal->VERSION(0.009) };
 
 {
 	alarm 2;
@@ -45,7 +45,7 @@ my $hasmodules = eval { require POSIX::RT::Signal; require Signal::Mask; 1 };
 	my $timer = POSIX::RT::Timer->new(signal => SIGUSR1, value => 0.1, interval => 0.1, ident => 42);
 	
 	local $SIG{USR1} = sub {
-		is ++$counter, $_;
+		is ++$counter, $_, "$counter == $_";
 	};
 
 	pause for 1..3;
@@ -55,11 +55,10 @@ my $hasmodules = eval { require POSIX::RT::Signal; require Signal::Mask; 1 };
 	SKIP: {
 		skip 'POSIX::RT::Signal or Signal::Mask not installed', 3 if not $hasmodules;
 		no warnings 'once';
-		*sigwait = *POSIX::RT::Signal::sigwait{CODE};
 		local $Signal::Mask{USR1} = 1;
 		$expected += 3;
 		for (4..6) {
-			my $result = sigwait(SIGUSR1, 1);
+			my $result = POSIX::RT::Signal::sigwaitinfo(SIGUSR1, 1);
 			is($counter++, $compare++, 'Counter equals compare');
 			is $result->{value}, 42, 'identifier is 42';
 		}
@@ -67,7 +66,7 @@ my $hasmodules = eval { require POSIX::RT::Signal; require Signal::Mask; 1 };
 
 	$timer->set_timeout(0, 0);
 
-	is ($counter, $expected);
+	is($counter, $expected, 'Counter equals expected');
 
 	local $SIG{USR1} = sub {
 		fail('Shouldn\'t get a signal')
