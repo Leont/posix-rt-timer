@@ -2,6 +2,7 @@ Revision history for POSIX-RT-Timer
 
 {{$NEXT}}
           Only use POSIX::RT::Signal 0.009+
+          Just TestRecommend POSIX::RT::Signal and Signal::Mask (instead of test-require)
 
 0.013     2012-02-06 23:48:34 Europe/Amsterdam
           Detect presence or absence of POSIX option groups more correctly
