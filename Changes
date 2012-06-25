@@ -1,6 +1,8 @@
 Revision history for POSIX-RT-Timer
 
 {{$NEXT}}
+
+0.014     2012-06-25 23:47:05 Europe/Amsterdam
           Only use POSIX::RT::Signal 0.009+
           Just TestRecommend POSIX::RT::Signal and Signal::Mask (instead of test-require)
 
