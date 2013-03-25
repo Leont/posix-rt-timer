@@ -78,9 +78,10 @@ static SV* S_create_clock(pTHX_ clockid_t clockid, const char* class) {
 static int my_clock_nanosleep(pTHX_ clockid_t clockid, int flags, const struct timespec* request, struct timespec* remain) {
 	int ret;
 	ret = clock_nanosleep(clockid, flags, request, remain);
-	if (ret != 0 && ret != EINTR) {
+	if (ret != 0) {
 		errno = ret;
-		die_sys("Could not sleep: %s");
+		if (ret != EINTR)
+			die_sys("Could not sleep: %s");
 	}
 	return ret;
 }
