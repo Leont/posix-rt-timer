@@ -1,7 +1,10 @@
 Revision history for POSIX-RT-Timer
 
 {{$NEXT}}
+
+0.015     2013-08-18 11:27:34 Europe/Amsterdam
           Set errno on EINTR too in my_clock_nanosleep
+          Added monotonic_raw timer
 
 0.014     2012-06-25 23:47:05 Europe/Amsterdam
           Only use POSIX::RT::Signal 0.009+
