@@ -30,6 +30,9 @@ static map clocks = {
 #elif defined CLOCK_HIGHRES
 	, { "monotonic", CLOCK_HIGHRES }
 #endif
+#ifdef CLOCK_MONOTONIC_RAW
+	, { "monotonic_raw", CLOCK_MONOTONIC_RAW }
+#endif
 #ifdef CLOCK_PROCESS_CPUTIME_ID
 	, { "process", CLOCK_PROCESS_CPUTIME_ID }
 #elif defined CLOCK_PROF
