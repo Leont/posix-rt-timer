@@ -107,4 +107,17 @@ Create a timer based on this clock. All arguments except C<clock> as the same as
 
 =back
 
+=head1 SEE ALSO
+
+A low-level interface to POSIX clocks is also provided by:
+
+=over 4
+
+=item * Time::HiRes
+
+=item * POSIX::2008
+
+=back
+
 =cut
+
