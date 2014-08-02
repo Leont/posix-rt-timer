@@ -7,6 +7,8 @@
  */
 
 #define PERL_NO_GET_CONTEXT
+#define PERL_REENTR_API 1
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -15,24 +17,7 @@
 #include <signal.h>
 #include <time.h>
 
-static void get_sys_error(char* buffer, size_t buffer_size) {
-#ifdef _GNU_SOURCE
-	const char* message = strerror_r(errno, buffer, buffer_size);
-	if (message != buffer) {
-		memcpy(buffer, message, buffer_size -1);
-		buffer[buffer_size] = '\0';
-	}
-#else
-	strerror_r(errno, buffer, buffer_size);
-#endif
-}
-
-static void S_die_sys(pTHX_ const char* format) {
-	char buffer[128];
-	get_sys_error(buffer, sizeof buffer);
-	Perl_croak(aTHX_ format, buffer);
-}
-#define die_sys(format) S_die_sys(aTHX_ format)
+#define die_sys(format) Perl_croak(aTHX_ format, strerror(errno))
 
 typedef struct { const char* key; clockid_t value; } map[];
 
