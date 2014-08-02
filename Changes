@@ -2,6 +2,7 @@ Revision history for POSIX-RT-Timer
 
 {{$NEXT}}
           Accept signal names, not just numbers
+          Add coarse and boottime clocks
 
 0.015     2013-08-18 11:27:34 Europe/Amsterdam
           Set errno on EINTR too in my_clock_nanosleep

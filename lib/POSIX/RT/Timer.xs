@@ -38,6 +38,9 @@ typedef struct { const char* key; clockid_t value; } map[];
 
 static map clocks = {
 	{ "realtime" , CLOCK_REALTIME  }
+#ifdef CLOCK_REALTIME_COARSE
+	, { "realtime_coarse", CLOCK_REALTIME_COARSE }
+#endif
 #ifdef CLOCK_MONOTONIC
 	, { "monotonic", CLOCK_MONOTONIC }
 #elif defined CLOCK_HIGHRES
@@ -45,6 +48,9 @@ static map clocks = {
 #endif
 #ifdef CLOCK_MONOTONIC_RAW
 	, { "monotonic_raw", CLOCK_MONOTONIC_RAW }
+#endif
+#ifdef CLOCK_MONOTONIC_COARSE
+	, { "monotonic_coarse", CLOCK_MONOTONIC_COARSE }
 #endif
 #ifdef CLOCK_PROCESS_CPUTIME_ID
 	, { "process", CLOCK_PROCESS_CPUTIME_ID }
@@ -56,6 +62,9 @@ static map clocks = {
 #endif
 #ifdef CLOCK_UPTIME
 	, { "uptime", CLOCK_UPTIME }
+#endif
+#ifdef CLOCK_BOOTTIME
+	, { "boottime", CLOCK_BOOTTIME }
 #endif
 #ifdef CLOCK_VIRTUAL
 	, { "virtual", CLOCK_VIRTUAL }
