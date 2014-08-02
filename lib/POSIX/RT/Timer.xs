@@ -77,16 +77,22 @@ static void nv_to_timespec(NV input, struct timespec* output) {
 	output->tv_nsec = (long) ((input - output->tv_sec) * NANO_SECONDS);
 }
 
+static int timer_destroy(pTHX_ SV* var, MAGIC* magic) {
+	if (timer_delete(*(timer_t*)magic->mg_ptr))
+		die_sys("Can't delete timer: %s");
+}
 
-static MAGIC* S_get_magic(pTHX_ SV* ref, const char* funcname) {
+static const MGVTBL timer_magic = { NULL, NULL, NULL, NULL, timer_destroy };
+
+static MAGIC* S_get_magic(pTHX_ SV* ref, const char* funcname, const MGVTBL* vtbl) {
 	SV* value;
 	MAGIC* magic;
-	if (!SvROK(ref) || !(value = SvRV(ref)) || !SvMAGICAL(value) || (magic = mg_find(value, PERL_MAGIC_ext)) == NULL)
+	if (!SvROK(ref) || !(value = SvRV(ref)) || !SvMAGICAL(value) || (magic = mg_findext(value, PERL_MAGIC_ext, vtbl)) == NULL)
 		Perl_croak(aTHX_ "Could not %s: this variable is not a timer", funcname);
 	return magic;
 }
-#define get_magic(ref, funcname) S_get_magic(aTHX_ ref, funcname)
-#define get_timer(ref, funcname) (*(timer_t*)get_magic(ref, funcname)->mg_ptr)
+#define get_magic(ref, funcname, vtbl) S_get_magic(aTHX_ ref, funcname, vtbl)
+#define get_timer(ref, funcname) (*(timer_t*)get_magic(ref, funcname, &timer_magic)->mg_ptr)
 
 static clockid_t S_get_clock(pTHX_ SV* ref, const char* funcname) {
 	SV* value;
@@ -95,13 +101,6 @@ static clockid_t S_get_clock(pTHX_ SV* ref, const char* funcname) {
 	return SvIV(value);
 }
 #define get_clock(ref, func) S_get_clock(aTHX_ ref, func)
-
-static int timer_destroy(pTHX_ SV* var, MAGIC* magic) {
-	if (timer_delete(*(timer_t*)magic->mg_ptr))
-		die_sys("Can't delete timer: %s");
-}
-
-MGVTBL timer_magic = { NULL, NULL, NULL, NULL, timer_destroy };
 
 static SV* S_create_timer(pTHX_ const char* class, clockid_t clockid, int signo, IV id) {
 	struct sigevent event;
