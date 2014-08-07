@@ -112,13 +112,13 @@ static inline Pid_t gettid() {
 #endif
 #endif
 
-static SV* S_create_timer(pTHX_ const char* class, clockid_t clockid, int signo, IV id) {
+static SV* S_create_timer(pTHX_ SV* class, clockid_t clockid, int signo, IV id) {
 	struct sigevent event;
 	timer_t timer;
 	SV *tmp, *retval;
 
 	tmp = newSV(0);
-	retval = sv_2mortal(sv_bless(newRV_noinc(tmp), gv_stashpv(class, 0)));
+	retval = sv_2mortal(sv_bless(newRV_noinc(tmp), gv_stashsv(class, 0)));
 	SvREADONLY_on(tmp);
 
 	memset(&event, 0, sizeof(struct sigevent));
@@ -133,7 +133,7 @@ static SV* S_create_timer(pTHX_ const char* class, clockid_t clockid, int signo,
 
 	if (timer_create(clockid, &event, &timer) == -1) 
 		die_sys("Couldn't create timer: %s");
-	MAGIC* magic = sv_magicext(tmp, NULL, PERL_MAGIC_ext, &timer_magic, (const char*)&timer, sizeof timer);
+	sv_magicext(tmp, NULL, PERL_MAGIC_ext, &timer_magic, (const char*)&timer, sizeof timer);
 
 	return retval;
 }
@@ -191,7 +191,7 @@ PROTOTYPES: DISABLED
 
 void
 _new(class, clock, signo, id)
-	const char* class;
+	SV* class;
 	SV* clock;
 	IV signo;
 	IV id;
