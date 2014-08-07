@@ -102,6 +102,16 @@ static clockid_t S_get_clock(pTHX_ SV* ref, const char* funcname) {
 }
 #define get_clock(ref, func) S_get_clock(aTHX_ ref, func)
 
+#ifdef SIGEV_THREAD_ID
+#include <sys/syscall.h>
+static inline Pid_t gettid() {
+	return syscall(SYS_gettid);
+}
+#ifndef sigev_notify_thread_id
+#define sigev_notify_thread_id   _sigev_un._tid
+#endif
+#endif
+
 static SV* S_create_timer(pTHX_ const char* class, clockid_t clockid, int signo, IV id) {
 	struct sigevent event;
 	timer_t timer;
@@ -112,9 +122,14 @@ static SV* S_create_timer(pTHX_ const char* class, clockid_t clockid, int signo,
 	SvREADONLY_on(tmp);
 
 	memset(&event, 0, sizeof(struct sigevent));
-	event.sigev_notify          = SIGEV_SIGNAL;
-	event.sigev_signo           = signo;
-	event.sigev_value.sival_int = id;
+#ifdef SIGEV_THREAD_ID
+	event.sigev_notify           = SIGEV_THREAD_ID;
+	event.sigev_notify_thread_id = gettid();
+#else
+	event.sigev_notify           = SIGEV_SIGNAL;
+#endif
+	event.sigev_signo            = signo;
+	event.sigev_value.sival_int  = id;
 
 	if (timer_create(clockid, &event, &timer) == -1) 
 		die_sys("Couldn't create timer: %s");
