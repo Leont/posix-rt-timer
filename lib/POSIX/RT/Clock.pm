@@ -16,8 +16,6 @@ sub timer {
 
 #ABSTRACT: POSIX real-time clocks
 
-__END__
-
 =head1 SYNOPSIS
 
  use POSIX::RT::Timer;

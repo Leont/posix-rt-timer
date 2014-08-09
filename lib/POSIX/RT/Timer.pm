@@ -31,8 +31,6 @@ sub new {
 
 #ABSTRACT: POSIX real-time timers
 
-__END__
-
 =head1 SYNOPSIS
 
  use POSIX::RT::Timer;
@@ -41,9 +39,17 @@ __END__
 
 =head1 DESCRIPTION
 
-This module provides for timers. Unlike getitimer/setitimer an arbitrary number of timers is supported.
+This module provides for POSIX Real-Time timers. There timers send a signal to the process much like getitimer/setitimer but have various improvements:
 
-Signal timers send a signal to the process, much like itimers. You can specify which signal is sent, using realtime signals is recommended.
+=over 4
+
+=item * An arbitrary number of timers is supported.
+
+=item * Delivery to any signal is allowed, though using L<realtime signals|POSIX::RT::Signal> is recommended.
+
+=item * Time measurement on a variety of clocks is supported.
+
+=back
 
 =head1 METHODS
 
