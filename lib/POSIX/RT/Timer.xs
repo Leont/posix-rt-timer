@@ -112,16 +112,9 @@ static inline Pid_t gettid() {
 #endif
 #endif
 
-static SV* S_create_timer(pTHX_ SV* class, clockid_t clockid, int signo, IV id) {
-	struct sigevent event;
-	timer_t timer;
-	SV *tmp, *retval;
+static int init_timer(timer_t* timer, clockid_t clockid, int signo, IV id) {
+	struct sigevent event = { 0 };
 
-	tmp = newSV(0);
-	retval = sv_2mortal(sv_bless(newRV_noinc(tmp), gv_stashsv(class, 0)));
-	SvREADONLY_on(tmp);
-
-	memset(&event, 0, sizeof(struct sigevent));
 #ifdef SIGEV_THREAD_ID
 	event.sigev_notify           = SIGEV_THREAD_ID;
 	event.sigev_notify_thread_id = gettid();
@@ -130,12 +123,26 @@ static SV* S_create_timer(pTHX_ SV* class, clockid_t clockid, int signo, IV id) 
 #endif
 	event.sigev_signo            = signo;
 	event.sigev_value.sival_int  = id;
+	return timer_create(clockid, &event, timer);
+}
 
-	if (timer_create(clockid, &event, &timer) == -1) 
-		die_sys("Couldn't create timer: %s");
-	sv_magicext(tmp, NULL, PERL_MAGIC_ext, &timer_magic, (const char*)&timer, sizeof timer);
+static SV* S_timer_to_sv(pTHX_ SV* class, const timer_t* timer) {
+	SV *tmp, *retval;
 
+	tmp = newSV(0);
+	retval = sv_2mortal(sv_bless(newRV_noinc(tmp), gv_stashsv(class, 0)));
+	SvREADONLY_on(tmp);
+
+	sv_magicext(tmp, NULL, PERL_MAGIC_ext, &timer_magic, (const char*)timer, sizeof *timer);
 	return retval;
+}
+#define timer_to_sv(class, timer) S_timer_to_sv(aTHX_ class, timer)
+
+static SV* S_create_timer(pTHX_ SV* class, clockid_t clockid, int signo, IV id) {
+	timer_t timer;
+	if (init_timer(&timer, clockid, signo, id) < 0)
+		die_sys("Couldn't create timer: %s");
+	return timer_to_sv(class, &timer);
 }
 #define create_timer(class, clockid, arg, id) S_create_timer(aTHX_ class, clockid, arg, id)
 
