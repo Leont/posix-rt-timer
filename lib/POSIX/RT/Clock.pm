@@ -7,11 +7,6 @@ use warnings FATAL => 'all';
 
 use POSIX::RT::Timer;
 
-sub timer {
-	my ($self, %options) = @_;
-	return POSIX::RT::Timer->new(%options, clock => $self);
-}
-
 1;    # End of POSIX::RT::Clock
 
 #ABSTRACT: POSIX real-time clocks

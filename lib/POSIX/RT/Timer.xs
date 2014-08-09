@@ -341,6 +341,19 @@ get_resolution(self)
 	OUTPUT:
 		RETVAL
 
+void
+timer(self, ...)
+	SV* self;
+	PPCODE:
+	ST(0) = sv_2mortal(newSVpvs("POSIX::RT::Timer"));
+	SP += items;
+	EXTEND(SP, 2);
+	PUSHs(sv_2mortal(newSVpvs("clock")));
+	PUSHs(self);
+	PUTBACK;
+	call_method("new", GIMME_V);
+	SPAGAIN;
+
 #if defined(_POSIX_CLOCK_SELECTION) && _POSIX_CLOCK_SELECTION >= 0
 NV
 sleep(self, frac_time, abstime = 0)
