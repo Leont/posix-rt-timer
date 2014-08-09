@@ -126,25 +126,17 @@ static int init_timer(timer_t* timer, clockid_t clockid, int signo, IV id) {
 	return timer_create(clockid, &event, timer);
 }
 
-static SV* S_timer_to_sv(pTHX_ SV* class, const timer_t* timer) {
+static SV* S_timer_to_sv(pTHX_ SV* class, const timer_t timer) {
 	SV *tmp, *retval;
 
 	tmp = newSV(0);
 	retval = sv_2mortal(sv_bless(newRV_noinc(tmp), gv_stashsv(class, 0)));
 	SvREADONLY_on(tmp);
 
-	sv_magicext(tmp, NULL, PERL_MAGIC_ext, &timer_magic, (const char*)timer, sizeof *timer);
+	sv_magicext(tmp, NULL, PERL_MAGIC_ext, &timer_magic, (const char*)&timer, sizeof timer);
 	return retval;
 }
 #define timer_to_sv(class, timer) S_timer_to_sv(aTHX_ class, timer)
-
-static SV* S_create_timer(pTHX_ SV* class, clockid_t clockid, int signo, IV id) {
-	timer_t timer;
-	if (init_timer(&timer, clockid, signo, id) < 0)
-		die_sys("Couldn't create timer: %s");
-	return timer_to_sv(class, &timer);
-}
-#define create_timer(class, clockid, arg, id) S_create_timer(aTHX_ class, clockid, arg, id)
 
 static SV* S_create_clock(pTHX_ clockid_t clockid, const char* class) {
 	SV *tmp, *retval;
@@ -196,18 +188,60 @@ MODULE = POSIX::RT::Timer				PACKAGE = POSIX::RT::Timer
 
 PROTOTYPES: DISABLED
 
-void
-_new(class, clock, signo, id)
+void new(class, ...)
 	SV* class;
-	SV* clock;
-	IV signo;
-	IV id;
 	PREINIT:
-		clockid_t clockid;
+		timer_t timer;
+		int i = 0;
+		clockid_t clockid = CLOCK_REALTIME;
+		IV signo = -1;
+		IV ident = 0;
+		struct itimerspec itimer = { 0, 0 };
+		bool absolute = FALSE;
 	PPCODE:
-		clockid = SvROK(clock) ? get_clock(clock, "create timer") : get_clockid(SvPV_nolen(clock));
-		XPUSHs(create_timer(class, clockid, signo, id));
-
+		for(i = 1; i + 1 < items; i += 2) {
+			const char* current;
+			STRLEN curlen;
+			SV *key = ST(i), *value = ST(i+1);
+			current = SvPV(key, curlen);
+			if (curlen == 5) {
+				if (strEQ(current, "clock")) {
+					clockid = SvROK(value) ? get_clock(value, "create timer") : get_clockid(SvPV_nolen(value));
+				}
+				else if (strEQ(current, "value")) {
+					nv_to_timespec(SvNV(value), &itimer.it_value);
+				}
+				else if (strEQ(current, "ident")) {
+					ident = SvIV(value);
+				}
+				else
+					goto fail;
+			}
+			else if (curlen == 6 && strEQ(current, "signal")) {
+				signo = (SvIOK(value) || looks_like_number(value)) ? SvIV(value) : whichsig(SvPV_nolen(value));
+			}
+			else if (curlen == 8) {
+				if (strEQ(current, "interval")) {
+					nv_to_timespec(SvNV(value), &itimer.it_interval);
+				}
+				else if (strEQ(current, "absolute")) {
+					absolute = 1;
+				}
+				else
+					goto fail;
+			}
+			else {
+				fail:
+				Perl_croak(aTHX_ "Unknown option '%s'", current);
+			}
+		}
+		if (signo < 0)
+			Perl_croak(aTHX_ "No valid signal was given");
+		if (init_timer(&timer, clockid, signo, ident) < 0)
+			die_sys("Couldn't create timer: %s");
+		if (timer_settime(timer, (absolute ? TIMER_ABSTIME : 0), &itimer, NULL) == -1)
+			die_sys("Couldn't set_time: %s");
+		PUSHs(timer_to_sv(class, timer));
 
 void
 get_timeout(self)

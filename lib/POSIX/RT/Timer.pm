@@ -9,24 +9,6 @@ use XSLoader ();
 
 XSLoader::load(__PACKAGE__, __PACKAGE__->VERSION);
 
-use IPC::Signal 'sig_num';
-
-sub new {
-	my ($class, %args) = @_;
-
-	my %options = (
-		interval => 0,
-		value    => 0,
-		clock    => 'realtime',
-		ident    => 0,
-		%args,
-	);
-	$options{signal} = sig_num($options{signal}) if $options{signal} !~ /^\d+$/;
-	my $ret = $class->_new(@options{qw/clock signal ident/});
-	$ret->set_timeout(@options{ 'value', 'interval' });
-	return $ret;
-}
-
 1;    # End of POSIX::RT::Timer
 
 #ABSTRACT: POSIX real-time timers
