@@ -5,6 +5,7 @@ use warnings;
 use Test::More 0.88;
 
 use Time::HiRes qw/alarm sleep/;
+use POSIX::RT::Clock;
 use POSIX::RT::Timer;
 use POSIX qw/SIGUSR1 pause/;
 
@@ -77,4 +78,18 @@ my $hasmodules = eval { require POSIX::RT::Signal; require Signal::Mask; POSIX::
 	pass('Shouldn\'t get a signal');
 };
 
-done_testing;
+{
+	alarm 0.2;
+
+	local $SIG{USR1} = sub {
+		pass('Got signal via clock');
+	};
+
+	my $timer = POSIX::RT::Clock->new('realtime')->timer(signal => SIGUSR1, value => 0.1);
+
+	pause;
+
+	alarm 0;
+}
+
+done_testing();
