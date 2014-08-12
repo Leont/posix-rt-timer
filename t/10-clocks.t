@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Config;
 use Test::More tests => 16;
-use Test::Exception;
+use Test::Fatal;
 
 use POSIX::RT::Clock;
 use Time::HiRes 'alarm';
@@ -12,7 +12,7 @@ use Time::HiRes 'alarm';
 alarm 5;
 
 my $clock;
-lives_ok { $clock = POSIX::RT::Clock->new('realtime') } 'Can be created';
+is exception { $clock = POSIX::RT::Clock->new('realtime') }, undef, 'Can be created';
 
 my $time = $clock->get_time();
 
@@ -34,15 +34,15 @@ my $monotonic;
 SKIP: {
 	skip 'No monotonic clock', 1 if not $clocks{monotonic};
 	$monotonic = POSIX::RT::Clock->new('monotonic');
-	lives_ok { $monotonic->get_time() } "Monotonic clock seems to work";
+	is exception { $monotonic->get_time() }, undef, "Monotonic clock seems to work";
 }
 
 SKIP: {
 	skip 'Doesn\'t have cpuclock', 2 if not POSIX::RT::Clock->can('get_cpuclock');
-	lives_ok { POSIX::RT::Clock->get_cpuclock($$) } 'Has cpuclock';
+	is exception { POSIX::RT::Clock->get_cpuclock($$) }, undef, 'Has cpuclock';
 	skip 'Doesn\'t have threads', 1 if not $Config{useithreads};
 	require threads;
-	lives_ok { POSIX::RT::Clock->get_cpuclock(threads->self) } 'Has cpuclock';
+	is exception { POSIX::RT::Clock->get_cpuclock(threads->self) }, undef, 'Has cpuclock';
 }
 
 SKIP: {
