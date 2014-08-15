@@ -5,6 +5,7 @@ Revision history for POSIX-RT-Timer
           Add coarse and boottime clocks
           Always deliver signal to current thread if supported
           Make "realtime" the default clock in Clocks
+          Add handle method to Clock and Timer
 
 0.015     2013-08-18 11:27:34 Europe/Amsterdam
           Set errno on EINTR too in my_clock_nanosleep

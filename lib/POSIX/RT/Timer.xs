@@ -259,6 +259,14 @@ void new(class, ...)
 		timer_args(&para, SP + 2, items - 1);
 		PUSHs(timer_instantiate(&para, class_str, length));
 
+UV
+handle(self)
+	SV* self;
+	CODE:
+		RETVAL = (UV)get_timer(self, "id");
+	OUTPUT:
+		RETVAL
+
 void
 get_timeout(self)
 	SV* self;
@@ -315,6 +323,14 @@ new(class, clock_type = "realtime")
 	const char* clock_type;
 	CODE:
 		RETVAL = create_clock(get_clockid(clock_type), class);
+	OUTPUT:
+		RETVAL
+
+UV
+handle(self)
+	SV* self;
+	CODE:
+		RETVAL = (UV)get_clock(self, "id");
 	OUTPUT:
 		RETVAL
 

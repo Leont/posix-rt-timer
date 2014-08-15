@@ -98,6 +98,10 @@ Sleep a C<$time> seconds on this clock. Unlike C<sleep>, it will retry on interr
 
 Create a timer based on this clock. All arguments except C<clock> as the same as in C<POSIX::RT::Timer::new>.
 
+=item * handle
+
+This returns the raw handle to the clock.
+
 =back
 
 =head1 SEE ALSO

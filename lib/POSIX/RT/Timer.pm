@@ -85,6 +85,10 @@ Set the timer and interval values. If C<$abstime> is true, they are absolute val
 
 Get the overrun count for the timer. The timer overrun count is the number of additional timer expirations that occurred since the signal was sent.
 
+=item * handle
+
+This returns the raw handle to the timer.
+
 =back
 
 =cut
