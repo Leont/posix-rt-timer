@@ -310,7 +310,7 @@ MODULE = POSIX::RT::Timer				PACKAGE = POSIX::RT::Clock
 PROTOTYPES: DISABLED
 
 SV*
-new(class, clock_type) 
+new(class, clock_type = "realtime")
 	const char* class;
 	const char* clock_type;
 	CODE:
