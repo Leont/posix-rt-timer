@@ -103,11 +103,9 @@ static clockid_t S_get_clock(pTHX_ SV* ref, const char* funcname) {
 }
 #define get_clock(ref, func) S_get_clock(aTHX_ ref, func)
 
-#ifdef SIGEV_THREAD_ID
+#if defined(SIGEV_THREAD_ID) && defined(SYS_gettid)
 #include <sys/syscall.h>
-static inline Pid_t gettid() {
-	return syscall(SYS_gettid);
-}
+#define gettid() syscall(SYS_gettid)
 #ifndef sigev_notify_thread_id
 #define sigev_notify_thread_id   _sigev_un._tid
 #endif
@@ -217,7 +215,7 @@ static SV* S_timer_instantiate(pTHX_ timer_init* para, const char* class, Size_t
 	if (para->signo < 0)
 		Perl_croak(aTHX_ "No valid signal was given");
 
-#ifdef SIGEV_THREAD_ID
+#ifdef gettid
 	event.sigev_notify           = SIGEV_THREAD_ID;
 	event.sigev_notify_thread_id = gettid();
 #else
