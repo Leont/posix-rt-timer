@@ -1,6 +1,8 @@
 Revision history for POSIX-RT-Timer
 
 {{$NEXT}}
+
+0.017     2014-08-21 23:35:23+03:00 Europe/Sofia
           Fix various compilation issues
 
 0.016     2014-08-16 13:28:48+02:00 Europe/Amsterdam
