@@ -27,6 +27,9 @@ static map clocks = {
 #ifdef CLOCK_REALTIME_COARSE
 	, { "realtime_coarse", CLOCK_REALTIME_COARSE }
 #endif
+#ifdef CLOCK_REALTIME_ALARM
+	, { "realtime_alarm", CLOCK_REALTIME_ALARM }
+#endif
 #ifdef CLOCK_MONOTONIC
 	, { "monotonic", CLOCK_MONOTONIC }
 #elif defined CLOCK_HIGHRES
@@ -52,8 +55,14 @@ static map clocks = {
 #ifdef CLOCK_BOOTTIME
 	, { "boottime", CLOCK_BOOTTIME }
 #endif
+#ifdef CLOCK_BOOTTIME_ALARM
+	, { "boottime_alarm", CLOCK_BOOTTIME_ALARM }
+#endif
 #ifdef CLOCK_VIRTUAL
 	, { "virtual", CLOCK_VIRTUAL }
+#endif
+#ifdef CLOCK_TAI
+	, { "tai", CLOCK_TAI }
 #endif
 };
 

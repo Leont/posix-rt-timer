@@ -1,6 +1,7 @@
 Revision history for POSIX-RT-Timer
 
 {{$NEXT}}
+          - Add realtime_alarm, boottime_alarm and tai clocks
 
 0.017     2014-08-21 23:35:23+03:00 Europe/Sofia
           Fix various compilation issues
