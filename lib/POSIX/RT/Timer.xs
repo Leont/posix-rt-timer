@@ -152,6 +152,7 @@ static pthread_t* S_get_pthread(pTHX_ SV* thread_handle) {
 	SV* tmp;
 	pthread_t* ret;
 	dSP;
+	ENTER;
 	SAVETMPS;
 	PUSHMARK(SP);
 	PUSHs(thread_handle);
@@ -161,6 +162,7 @@ static pthread_t* S_get_pthread(pTHX_ SV* thread_handle) {
 	tmp = POPs;
 	ret = INT2PTR(pthread_t* ,SvUV(tmp));
 	FREETMPS;
+	LEAVE;
 	return ret;
 }
 #define get_pthread(handle) S_get_pthread(aTHX_ handle)
