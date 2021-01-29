@@ -186,35 +186,27 @@ static void S_timer_args(pTHX_ timer_init* para, SV** begin, Size_t items) {
 		SV *key = begin[i], *value = begin[i+1];
 		current = SvPV(key, curlen);
 		if (curlen == 5) {
-			if (strEQ(current, "clock")) {
+			if (strEQ(current, "clock"))
 				para->clockid = SvROK(value) ? get_clock(value, "create timer") : get_clockid(value);
-			}
-			else if (strEQ(current, "value")) {
+			else if (strEQ(current, "value"))
 				nv_to_timespec(SvNV(value), &para->itimer.it_value);
-			}
-			else if (strEQ(current, "ident")) {
+			else if (strEQ(current, "ident"))
 				para->ident = SvIV(value);
-			}
 			else
 				goto fail;
 		}
-		else if (curlen == 6 && strEQ(current, "signal")) {
+		else if (curlen == 6 && strEQ(current, "signal"))
 			para->signo = (SvIOK(value) || looks_like_number(value)) ? SvIV(value) : whichsig(SvPV_nolen(value));
-		}
 		else if (curlen == 8) {
-			if (strEQ(current, "interval")) {
+			if (strEQ(current, "interval"))
 				nv_to_timespec(SvNV(value), &para->itimer.it_interval);
-			}
-			else if (strEQ(current, "absolute")) {
+			else if (strEQ(current, "absolute"))
 				para->flags |= TIMER_ABSTIME;
-			}
 			else
 				goto fail;
 		}
-		else {
-			fail:
-			Perl_croak(aTHX_ "Unknown option '%s'", current);
-		}
+		else
+			fail: Perl_croak(aTHX_ "Unknown option '%s'", current);
 	}
 }
 #define timer_args(para, begin, items) S_timer_args(aTHX_ para, begin, items)
