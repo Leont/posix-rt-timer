@@ -122,11 +122,11 @@ static clockid_t S_get_clock(pTHX_ SV* ref, const char* funcname) {
 #endif
 #endif
 
-static SV* S_create_clock(pTHX_ clockid_t clockid, const char* class) {
+static SV* S_create_clock(pTHX_ clockid_t clockid, SV* class) {
 	SV *tmp, *retval;
 	tmp = newSViv(clockid);
 	retval = newRV_noinc(tmp);
-	sv_bless(retval, gv_stashpv(class, 0));
+	sv_bless(retval, gv_stashsv(class, 0));
 	SvREADONLY_on(tmp);
 	return retval;
 }
@@ -323,18 +323,18 @@ get_overrun(self)
 	OUTPUT:
 		RETVAL
 
-#define realtime sv_2mortal(newSVpvs("realtime"))
-
 MODULE = POSIX::RT::Timer				PACKAGE = POSIX::RT::Clock
 
 PROTOTYPES: DISABLED
 
 SV*
-new(class, clock_type = realtime)
-	const char* class;
-	SV* clock_type;
+new(class, ...)
+	SV* class;
+	PREINIT:
+		clockid_t clockid;
 	CODE:
-		RETVAL = create_clock(get_clockid(clock_type), class);
+		clockid = items > 1 ? get_clockid(ST(1)) : CLOCK_REALTIME;
+		RETVAL = create_clock(clockid, class);
 	OUTPUT:
 		RETVAL
 
@@ -349,7 +349,7 @@ handle(self)
 #if defined(_POSIX_CPUTIME) && _POSIX_CPUTIME >= 0
 SV*
 get_cpuclock(class, pid = undef)
-	const char* class;
+	SV* class;
 	SV* pid;
 	PREINIT:
 		clockid_t clockid;
