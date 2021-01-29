@@ -259,7 +259,7 @@ void new(class, ...)
 		Size_t length;
 	PPCODE:
 		class_str = SvPV(class, length);
-		timer_init para = { 0, CLOCK_REALTIME, -1, 0, 0, FALSE };
+		timer_init para = { CLOCK_REALTIME, 0, 0, 0, 0};
 		timer_args(&para, SP + 2, items - 1);
 		PUSHs(timer_instantiate(&para, class_str, length));
 
@@ -424,7 +424,7 @@ void
 timer(self, ...)
 	SV* self;
 	PPCODE:
-		timer_init para = { 0, CLOCK_REALTIME, -1, 0, 0, FALSE };
+		timer_init para = { CLOCK_REALTIME, 0, 0, 0, 0};
 		timer_args(&para, SP + 2, items - 1);
 		para.clockid = get_clock(self, "timer");
 		PUSHs(timer_instantiate(&para, "POSIX::RT::Timer", 16));
