@@ -20,56 +20,58 @@
 
 #define die_sys(format) Perl_croak(aTHX_ format, strerror(errno))
 
-typedef struct { const char* key; clockid_t value; } map[];
+typedef struct { const char* key; STRLEN key_length; clockid_t value; } map[];
 
 static map clocks = {
-	{ "realtime" , CLOCK_REALTIME  }
+	{ STR_WITH_LEN("realtime") , CLOCK_REALTIME  }
 #ifdef CLOCK_REALTIME_COARSE
-	, { "realtime_coarse", CLOCK_REALTIME_COARSE }
+	, { STR_WITH_LEN("realtime_coarse"), CLOCK_REALTIME_COARSE }
 #endif
 #ifdef CLOCK_REALTIME_ALARM
-	, { "realtime_alarm", CLOCK_REALTIME_ALARM }
+	, { STR_WITH_LEN("realtime_alarm"), CLOCK_REALTIME_ALARM }
 #endif
 #ifdef CLOCK_MONOTONIC
-	, { "monotonic", CLOCK_MONOTONIC }
+	, { STR_WITH_LEN("monotonic"), CLOCK_MONOTONIC }
 #elif defined CLOCK_HIGHRES
-	, { "monotonic", CLOCK_HIGHRES }
+	, { STR_WITH_LEN("monotonic"), CLOCK_HIGHRES }
 #endif
 #ifdef CLOCK_MONOTONIC_RAW
-	, { "monotonic_raw", CLOCK_MONOTONIC_RAW }
+	, { STR_WITH_LEN("monotonic_raw"), CLOCK_MONOTONIC_RAW }
 #endif
 #ifdef CLOCK_MONOTONIC_COARSE
-	, { "monotonic_coarse", CLOCK_MONOTONIC_COARSE }
+	, { STR_WITH_LEN("monotonic_coarse"), CLOCK_MONOTONIC_COARSE }
 #endif
 #ifdef CLOCK_PROCESS_CPUTIME_ID
-	, { "process", CLOCK_PROCESS_CPUTIME_ID }
+	, { STR_WITH_LEN("process"), CLOCK_PROCESS_CPUTIME_ID }
 #elif defined CLOCK_PROF
-	, { "process", CLOCK_PROF }
+	, { STR_WITH_LEN("process"), CLOCK_PROF }
 #endif
 #ifdef CLOCK_THREAD_CPUTIME_ID
-	, { "thread", CLOCK_THREAD_CPUTIME_ID }
+	, { STR_WITH_LEN("thread"), CLOCK_THREAD_CPUTIME_ID }
 #endif
 #ifdef CLOCK_UPTIME
-	, { "uptime", CLOCK_UPTIME }
+	, { STR_WITH_LEN("uptime"), CLOCK_UPTIME }
 #endif
 #ifdef CLOCK_BOOTTIME
-	, { "boottime", CLOCK_BOOTTIME }
+	, { STR_WITH_LEN("boottime"), CLOCK_BOOTTIME }
 #endif
 #ifdef CLOCK_BOOTTIME_ALARM
-	, { "boottime_alarm", CLOCK_BOOTTIME_ALARM }
+	, { STR_WITH_LEN("boottime_alarm"), CLOCK_BOOTTIME_ALARM }
 #endif
 #ifdef CLOCK_VIRTUAL
-	, { "virtual", CLOCK_VIRTUAL }
+	, { STR_WITH_LEN("virtual"), CLOCK_VIRTUAL }
 #endif
 #ifdef CLOCK_TAI
-	, { "tai", CLOCK_TAI }
+	, { STR_WITH_LEN("tai"), CLOCK_TAI }
 #endif
 };
 
-static clockid_t S_get_clockid(pTHX_ const char* clock_name) {
+static clockid_t S_get_clockid(pTHX_ SV* clock_name) {
 	int i;
+	STRLEN length;
+	const char* clock_ptr = SvPV(clock_name, length);
 	for (i = 0; i < sizeof clocks / sizeof *clocks; ++i) {
-		if (strEQ(clock_name, clocks[i].key))
+		if (clocks[i].key_length == length && strEQ(clock_ptr, clocks[i].key))
 			return clocks[i].value;
 	}
 	Perl_croak(aTHX_ "No such timer '%s' known", clock_name);
@@ -183,7 +185,7 @@ static void S_timer_args(pTHX_ timer_init* para, SV** begin, Size_t items) {
 		current = SvPV(key, curlen);
 		if (curlen == 5) {
 			if (strEQ(current, "clock")) {
-				para->clockid = SvROK(value) ? get_clock(value, "create timer") : get_clockid(SvPV_nolen(value));
+				para->clockid = SvROK(value) ? get_clock(value, "create timer") : get_clockid(value);
 			}
 			else if (strEQ(current, "value")) {
 				nv_to_timespec(SvNV(value), &para->itimer.it_value);
@@ -321,14 +323,16 @@ get_overrun(self)
 	OUTPUT:
 		RETVAL
 
+#define realtime sv_2mortal(newSVpvs("realtime"))
+
 MODULE = POSIX::RT::Timer				PACKAGE = POSIX::RT::Clock
 
 PROTOTYPES: DISABLED
 
 SV*
-new(class, clock_type = "realtime")
+new(class, clock_type = realtime)
 	const char* class;
-	const char* clock_type;
+	SV* clock_type;
 	CODE:
 		RETVAL = create_clock(get_clockid(clock_type), class);
 	OUTPUT:
@@ -378,7 +382,7 @@ get_clocks(class)
 		const size_t max = sizeof clocks / sizeof *clocks;
 	PPCODE:
 		for (i = 0; i < max; ++i)
-			mXPUSHp(clocks[i].key, strlen(clocks[i].key));
+			mXPUSHp(clocks[i].key, clocks[i].key_length);
 		XSRETURN(max);
 
 NV
