@@ -110,7 +110,7 @@ static clockid_t S_get_clock(pTHX_ SV* ref, const char* funcname) {
 	SV* value;
 	if (!SvROK(ref) || !(value = SvRV(ref)))
 		Perl_croak(aTHX_ "Could not %s: this variable is not a clock", funcname);
-	return SvIV(value);
+	return SvUV(value);
 }
 #define get_clock(ref, func) S_get_clock(aTHX_ ref, func)
 
