@@ -74,7 +74,7 @@ static clockid_t S_get_clockid(pTHX_ SV* clock_name) {
 		if (clocks[i].key_length == length && strEQ(clock_ptr, clocks[i].key))
 			return clocks[i].value;
 	}
-	Perl_croak(aTHX_ "No such timer '%s' known", clock_name);
+	Perl_croak(aTHX_ "No such timer '%s' known", SvPV_nolen(clock_name));
 }
 #define get_clockid(name) S_get_clockid(aTHX_ name)
 
@@ -92,6 +92,7 @@ static void nv_to_timespec(NV input, struct timespec* output) {
 static int timer_destroy(pTHX_ SV* var, MAGIC* magic) {
 	if (timer_delete(*(timer_t*)magic->mg_ptr))
 		die_sys("Can't delete timer: %s");
+	return 0;
 }
 
 static const MGVTBL timer_magic = { NULL, NULL, NULL, NULL, timer_destroy };
@@ -259,7 +260,7 @@ void new(class, ...)
 		Size_t length;
 	PPCODE:
 		class_str = SvPV(class, length);
-		timer_init para = { CLOCK_REALTIME, 0, 0, 0, 0};
+		timer_init para = { CLOCK_REALTIME, 0, 0, { 0 }, 0 };
 		timer_args(&para, SP + 2, items - 1);
 		PUSHs(timer_instantiate(&para, class_str, length));
 
@@ -352,14 +353,14 @@ get_cpuclock(class, pid = undef)
 #if defined(USE_ITHREADS) && defined(_POSIX_THREAD_CPUTIME) && _POSIX_THREAD_CPUTIME >= 0
 			pthread_t* handle = get_pthread(pid);
 			if (pthread_getcpuclockid(*handle, &clockid) != 0)
-				die_sys("Could not get cpuclock");
+				die_sys("Could not get cpuclock: %s");
 #else
 			Perl_croak(aTHX_ "Can't get CPU time for threads");
 #endif
 		}
 		else {
 			if (clock_getcpuclockid(SvOK(pid) ? SvIV(pid) : 0, &clockid) != 0)
-				die_sys("Could not get cpuclock");
+				die_sys("Could not get cpuclock: %s");
 		}
 		
 		RETVAL = create_clock(clockid, class);
@@ -424,7 +425,7 @@ void
 timer(self, ...)
 	SV* self;
 	PPCODE:
-		timer_init para = { CLOCK_REALTIME, 0, 0, 0, 0};
+		timer_init para = { CLOCK_REALTIME, 0, 0, { 0 }, 0 };
 		timer_args(&para, SP + 2, items - 1);
 		para.clockid = get_clock(self, "timer");
 		PUSHs(timer_instantiate(&para, "POSIX::RT::Timer", 16));
@@ -459,7 +460,6 @@ sleep_deeply(self, frac_time, abstime = 0)
 	PREINIT:
 		clockid_t clockid;
 		struct timespec sleep_time;
-		NV real_time;
 	CODE:
 		clockid = get_clock(self, "sleep_deeply");
 		if (abstime)
