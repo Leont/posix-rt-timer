@@ -89,24 +89,6 @@ static void nv_to_timespec(NV input, struct timespec* output) {
 	output->tv_nsec = (long) ((input - output->tv_sec) * NANO_SECONDS);
 }
 
-static int timer_destroy(pTHX_ SV* var, MAGIC* magic) {
-	if (timer_delete(*(timer_t*)magic->mg_ptr))
-		die_sys("Can't delete timer: %s");
-	return 0;
-}
-
-static const MGVTBL timer_magic = { NULL, NULL, NULL, NULL, timer_destroy };
-
-static MAGIC* S_get_magic(pTHX_ SV* ref, const char* funcname, const MGVTBL* vtbl) {
-	SV* value;
-	MAGIC* magic;
-	if (!SvROK(ref) || !(value = SvRV(ref)) || !SvMAGICAL(value) || (magic = mg_findext(value, PERL_MAGIC_ext, vtbl)) == NULL)
-		Perl_croak(aTHX_ "Could not %s: this variable is not a timer", funcname);
-	return magic;
-}
-#define get_magic(ref, funcname, vtbl) S_get_magic(aTHX_ ref, funcname, vtbl)
-#define get_timer(ref, funcname) (*(timer_t*)get_magic(ref, funcname, &timer_magic)->mg_ptr)
-
 static clockid_t S_get_clock(pTHX_ SV* ref, const char* funcname) {
 	SV* value;
 	if (!SvROK(ref) || !(value = SvRV(ref)))
@@ -215,11 +197,9 @@ static timer_init S_timer_args(pTHX_ SV** begin, Size_t items) {
 }
 #define timer_args(begin, items) S_timer_args(aTHX_ begin, items)
 
-static SV* S_timer_instantiate(pTHX_ timer_init* para, const char* class, Size_t classlength) {
-	timer_t* timer;
+static timer_t S_timer_new(pTHX_ timer_init* para) {
+	timer_t timer;
 	struct sigevent event = { 0 };
-	SV *tmp, *retval;
-	MAGIC* mg;
 
 	if (para->signo < 0)
 		Perl_croak(aTHX_ "No valid signal was given");
@@ -233,24 +213,14 @@ static SV* S_timer_instantiate(pTHX_ timer_init* para, const char* class, Size_t
 	event.sigev_signo            = para->signo;
 	event.sigev_value.sival_int  = para->ident;
 
-	Newx(timer, 1, timer_t);
-
-	if (timer_create(para->clockid, &event, timer) < 0) {
-		Safefree(timer);
+	if (timer_create(para->clockid, &event, &timer) < 0)
 		die_sys("Couldn't create timer: %s");
-	}
-	if (timer_settime(*timer, para->flags, &para->itimer, NULL) < 0)
+	if (timer_settime(timer, para->flags, &para->itimer, NULL) < 0)
 		die_sys("Couldn't set_time: %s");
 
-	tmp = newSV(0);
-	retval = sv_2mortal(sv_bless(newRV_noinc(tmp), gv_stashpvn(class, classlength, 0)));
-	SvREADONLY_on(tmp);
-
-	mg = sv_magicext(tmp, NULL, PERL_MAGIC_ext, &timer_magic, (const char*)timer, 0);
-	mg->mg_len = sizeof *timer;
-	return retval;
+	return timer;
 }
-#define timer_instantiate(para, class, classlen) S_timer_instantiate(aTHX_ para, class, classlen)
+#define timer_new(para) S_timer_new(aTHX_ para)
 
 void timespec_add(struct timespec* left, const struct timespec* right) {
 	left->tv_sec += right->tv_sec;
@@ -266,17 +236,15 @@ static const struct timespec no_time = { 0, 0 };
 typedef timer_t POSIX__RT__Timer;
 typedef clockid_t POSIX__RT__Clock;
 
-MODULE = POSIX::RT::Timer				PACKAGE = POSIX::RT::Timer
+MODULE = POSIX::RT::Timer  PACKAGE = POSIX::RT::Timer
 
 PROTOTYPES: DISABLED
 
-void new(SV* class, timer_init args, ...)
-	PREINIT:
-		const char* class_str;
-		Size_t length;
-	PPCODE:
-		class_str = SvPV(class, length);
-		PUSHs(timer_instantiate(&args, class_str, length));
+POSIX::RT::Timer new(SV* class, timer_init args, ...)
+	CODE:
+		RETVAL = timer_new(&args);
+	OUTPUT:
+		RETVAL
 
 UV handle(POSIX::RT::Timer timer)
 	CODE:
@@ -312,6 +280,10 @@ IV get_overrun(POSIX::RT::Timer timer)
 			die_sys("Couldn't get_overrun: %s");
 	OUTPUT:
 		RETVAL
+
+void DESTROY(POSIX::RT::Timer timer)
+	CODE:
+		timer_delete(timer);
 
 MODULE = POSIX::RT::Timer				PACKAGE = POSIX::RT::Clock
 
@@ -378,10 +350,12 @@ struct timespec get_resolution(POSIX::RT::Clock clockid)
 	OUTPUT:
 		RETVAL
 
-void timer(POSIX::RT::Clock clockid, timer_init args, ...)
-	PPCODE:
+POSIX::RT::Timer timer(POSIX::RT::Clock clockid, timer_init args, ...)
+	CODE:
 		args.clockid = clockid;
-		PUSHs(timer_instantiate(&args, "POSIX::RT::Timer", 16));
+		RETVAL = timer_new(&args);
+	OUTPUT:
+		RETVAL
 
 #if defined(_POSIX_CLOCK_SELECTION) && _POSIX_CLOCK_SELECTION >= 0
 struct timespec sleep(POSIX::RT::Clock clockid, struct timespec time, bool abstime = FALSE)
