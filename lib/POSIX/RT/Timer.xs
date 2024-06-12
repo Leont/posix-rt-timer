@@ -253,8 +253,7 @@ MODULE = POSIX::RT::Timer				PACKAGE = POSIX::RT::Timer
 
 PROTOTYPES: DISABLED
 
-void new(class, ...)
-	SV* class;
+void new(SV* class, ...)
 	PREINIT:
 		const char* class_str;
 		Size_t length;
@@ -264,17 +263,13 @@ void new(class, ...)
 		timer_args(&para, SP + 2, items - 1);
 		PUSHs(timer_instantiate(&para, class_str, length));
 
-UV
-handle(self)
-	SV* self;
+UV handle(SV* self)
 	CODE:
 		RETVAL = (UV)get_timer(self, "id");
 	OUTPUT:
 		RETVAL
 
-void
-get_timeout(self)
-	SV* self;
+void get_timeout(SV* self)
 	PREINIT:
 		timer_t timer;
 		struct itimerspec value;
@@ -286,12 +281,7 @@ get_timeout(self)
 		if (GIMME_V == G_ARRAY)
 			mXPUSHn(timespec_to_nv(&value.it_interval));
 
-void
-set_timeout(self, new_value, new_interval = 0, abstime = 0)
-	SV* self;
-	NV new_value;
-	NV new_interval;
-	IV abstime;
+void set_timeout(SV* self, NV new_value, NV new_interval = 0, bool abstime = FALSE)
 	PREINIT:
 		timer_t timer;
 		struct itimerspec new_itimer, old_itimer;
@@ -305,9 +295,7 @@ set_timeout(self, new_value, new_interval = 0, abstime = 0)
 		if (GIMME_V == G_ARRAY)
 			mXPUSHn(timespec_to_nv(&old_itimer.it_interval));
 
-IV
-get_overrun(self)
-	SV* self;
+IV get_overrun(SV* self)
 	PREINIT:
 		timer_t timer;
 	CODE:
@@ -322,9 +310,7 @@ MODULE = POSIX::RT::Timer				PACKAGE = POSIX::RT::Clock
 
 PROTOTYPES: DISABLED
 
-SV*
-new(class, ...)
-	SV* class;
+SV* new(SV* class, ...)
 	PREINIT:
 		clockid_t clockid;
 	CODE:
@@ -333,19 +319,14 @@ new(class, ...)
 	OUTPUT:
 		RETVAL
 
-UV
-handle(self)
-	SV* self;
+UV handle(SV* self)
 	CODE:
 		RETVAL = (UV)get_clock(self, "id");
 	OUTPUT:
 		RETVAL
 
 #if defined(_POSIX_CPUTIME) && _POSIX_CPUTIME >= 0
-SV*
-get_cpuclock(class, pid = undef)
-	SV* class;
-	SV* pid;
+SV* get_cpuclock(SV* class, SV* pid = undef)
 	PREINIT:
 		clockid_t clockid;
 	CODE:
@@ -369,9 +350,7 @@ get_cpuclock(class, pid = undef)
 
 #endif
 
-void
-get_clocks(class)
-	SV* class;
+void get_clocks(SV* class)
 	PREINIT:
 		size_t i;
 		const size_t max = sizeof clocks / sizeof *clocks;
@@ -380,9 +359,7 @@ get_clocks(class)
 			mXPUSHp(clocks[i].key, clocks[i].key_length);
 		XSRETURN(max);
 
-NV
-get_time(self)
-	SV* self;
+NV get_time(SV* self)
 	PREINIT:
 		clockid_t clockid;
 		struct timespec time;
@@ -394,10 +371,7 @@ get_time(self)
 	OUTPUT:
 		RETVAL
 
-void
-set_time(self, frac_time)
-	SV* self;
-	NV frac_time;
+void set_time(SV* self, NV frac_time)
 	PREINIT:
 		clockid_t clockid;
 		struct timespec time;
@@ -407,9 +381,7 @@ set_time(self, frac_time)
 		if (clock_settime(clockid, &time) == -1)
 			die_sys("Couldn't set time: %s");
 
-NV
-get_resolution(self)
-	SV* self;
+NV get_resolution(SV* self)
 	PREINIT:
 		clockid_t clockid;
 		struct timespec time;
@@ -421,9 +393,7 @@ get_resolution(self)
 	OUTPUT:
 		RETVAL
 
-void
-timer(self, ...)
-	SV* self;
+void timer(SV* self, ...)
 	PPCODE:
 		timer_init para = { CLOCK_REALTIME, 0, 0, { 0 }, 0 };
 		timer_args(&para, SP + 2, items - 1);
@@ -431,11 +401,7 @@ timer(self, ...)
 		PUSHs(timer_instantiate(&para, "POSIX::RT::Timer", 16));
 
 #if defined(_POSIX_CLOCK_SELECTION) && _POSIX_CLOCK_SELECTION >= 0
-NV
-sleep(self, frac_time, abstime = 0)
-	SV* self;
-	NV frac_time;
-	int abstime;
+NV sleep(SV* self, NV frac_time, bool abstime = FALSE)
 	PREINIT:
 		clockid_t clockid;
 		struct timespec sleep_time, remain_time;
@@ -452,11 +418,7 @@ sleep(self, frac_time, abstime = 0)
 	OUTPUT:
 		RETVAL
 
-NV
-sleep_deeply(self, frac_time, abstime = 0)
-	SV* self;
-	NV frac_time;
-	int abstime;
+NV sleep_deeply(SV* self, NV frac_time, bool abstime = FALSE)
 	PREINIT:
 		clockid_t clockid;
 		struct timespec sleep_time;
