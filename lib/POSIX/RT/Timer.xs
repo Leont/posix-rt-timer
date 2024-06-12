@@ -179,7 +179,8 @@ typedef struct _timer_init {
 	int flags;
 } timer_init;
 
-static void S_timer_args(pTHX_ timer_init* para, SV** begin, Size_t items) {
+static timer_init S_timer_args(pTHX_ SV** begin, Size_t items) {
+	timer_init result = { CLOCK_REALTIME, 0, 0, { { 0 } , { 0 } }, 0 };
 	int i;
 	for(i = 0; i < items; i += 2) {
 		const char* current;
@@ -188,29 +189,31 @@ static void S_timer_args(pTHX_ timer_init* para, SV** begin, Size_t items) {
 		current = SvPV(key, curlen);
 		if (curlen == 5) {
 			if (strEQ(current, "clock"))
-				para->clockid = SvROK(value) ? get_clock(value, "create timer") : get_clockid(value);
+				result.clockid = SvROK(value) ? get_clock(value, "create timer") : get_clockid(value);
 			else if (strEQ(current, "value"))
-				nv_to_timespec(SvNV(value), &para->itimer.it_value);
+				nv_to_timespec(SvNV(value), &result.itimer.it_value);
 			else if (strEQ(current, "ident"))
-				para->ident = SvIV(value);
+				result.ident = SvIV(value);
 			else
 				goto fail;
 		}
 		else if (curlen == 6 && strEQ(current, "signal"))
-			para->signo = (SvIOK(value) || looks_like_number(value)) ? SvIV(value) : whichsig(SvPV_nolen(value));
+			result.signo = (SvIOK(value) || looks_like_number(value)) ? SvIV(value) : whichsig(SvPV_nolen(value));
 		else if (curlen == 8) {
 			if (strEQ(current, "interval"))
-				nv_to_timespec(SvNV(value), &para->itimer.it_interval);
+				nv_to_timespec(SvNV(value), &result.itimer.it_interval);
 			else if (strEQ(current, "absolute"))
-				para->flags |= TIMER_ABSTIME;
+				result.flags |= TIMER_ABSTIME;
 			else
 				goto fail;
 		}
 		else
 			fail: Perl_croak(aTHX_ "Unknown option '%s'", current);
 	}
+
+	return result;
 }
-#define timer_args(para, begin, items) S_timer_args(aTHX_ para, begin, items)
+#define timer_args(begin, items) S_timer_args(aTHX_ begin, items)
 
 static SV* S_timer_instantiate(pTHX_ timer_init* para, const char* class, Size_t classlength) {
 	timer_t* timer;
@@ -273,9 +276,8 @@ void new(SV* class, ...)
 		Size_t length;
 	PPCODE:
 		class_str = SvPV(class, length);
-		timer_init para = { CLOCK_REALTIME, 0, 0, { 0 }, 0 };
-		timer_args(&para, SP + 2, items - 1);
-		PUSHs(timer_instantiate(&para, class_str, length));
+		timer_init args = timer_args(SP + 2, items - 1);
+		PUSHs(timer_instantiate(&args, class_str, length));
 
 UV handle(POSIX::RT::Timer timer)
 	CODE:
@@ -379,10 +381,9 @@ struct timespec get_resolution(POSIX::RT::Clock clockid)
 
 void timer(POSIX::RT::Clock clockid, ...)
 	PPCODE:
-		timer_init para = { CLOCK_REALTIME, 0, 0, { 0 }, 0 };
-		timer_args(&para, SP + 2, items - 1);
-		para.clockid = clockid;
-		PUSHs(timer_instantiate(&para, "POSIX::RT::Timer", 16));
+		timer_init args = timer_args(SP + 2, items - 1);
+		args.clockid = clockid;
+		PUSHs(timer_instantiate(&args, "POSIX::RT::Timer", 16));
 
 #if defined(_POSIX_CLOCK_SELECTION) && _POSIX_CLOCK_SELECTION >= 0
 struct timespec sleep(POSIX::RT::Clock clockid, struct timespec time, bool abstime = FALSE)
