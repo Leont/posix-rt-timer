@@ -249,6 +249,17 @@ static SV* S_timer_instantiate(pTHX_ timer_init* para, const char* class, Size_t
 }
 #define timer_instantiate(para, class, classlen) S_timer_instantiate(aTHX_ para, class, classlen)
 
+void timespec_add(struct timespec* left, const struct timespec* right) {
+	left->tv_sec += right->tv_sec;
+	left->tv_nsec += right->tv_nsec;
+	while (left->tv_nsec > 1000000000) {
+		left->tv_nsec -= 1000000000;
+		left->tv_sec++;
+	}
+}
+
+static const struct timespec no_time = { 0, 0 };
+
 typedef timer_t POSIX__RT__Timer;
 typedef clockid_t POSIX__RT__Clock;
 
@@ -282,12 +293,11 @@ void get_timeout(POSIX::RT::Timer timer)
 		if (GIMME_V == G_ARRAY)
 			mXPUSHn(timespec_to_nv(&value.it_interval));
 
-void set_timeout(POSIX::RT::Timer timer, NV new_value, NV new_interval = 0, bool abstime = FALSE)
+void set_timeout(POSIX::RT::Timer timer, struct timespec new_value, struct timespec new_interval = no_time, bool abstime = FALSE)
 	PREINIT:
-		struct itimerspec new_itimer, old_itimer;
+		struct itimerspec old_itimer;
 	PPCODE:
-		nv_to_timespec(new_value, &new_itimer.it_value);
-		nv_to_timespec(new_interval, &new_itimer.it_interval);
+		struct itimerspec new_itimer = { new_value, new_interval };
 		if (timer_settime(timer, (abstime ? TIMER_ABSTIME : 0), &new_itimer, &old_itimer) == -1)
 			die_sys("Couldn't set_time: %s");
 		mXPUSHn(timespec_to_nv(&old_itimer.it_value));
@@ -352,31 +362,22 @@ void get_clocks(...)
 			mXPUSHp(clocks[i].key, clocks[i].key_length);
 		PUTBACK;
 
-NV get_time(POSIX::RT::Clock clockid)
-	PREINIT:
-		struct timespec time;
+struct timespec get_time(POSIX::RT::Clock clockid)
 	CODE:
-		if (clock_gettime(clockid, &time) == -1)
+		if (clock_gettime(clockid, &RETVAL) == -1)
 			die_sys("Couldn't get time: %s");
-		RETVAL = timespec_to_nv(&time);
 	OUTPUT:
 		RETVAL
 
-void set_time(POSIX::RT::Clock clockid, NV frac_time)
-	PREINIT:
-		struct timespec time;
+void set_time(POSIX::RT::Clock clockid, struct timespec time)
 	CODE:
-		nv_to_timespec(frac_time, &time);
 		if (clock_settime(clockid, &time) == -1)
 			die_sys("Couldn't set time: %s");
 
-NV get_resolution(POSIX::RT::Clock clockid)
-	PREINIT:
-		struct timespec time;
+struct timespec get_resolution(POSIX::RT::Clock clockid)
 	CODE:
-		if (clock_getres(clockid, &time) == -1)
+		if (clock_getres(clockid, &RETVAL) == -1)
 			die_sys("Couldn't get resolution: %s");
-		RETVAL = timespec_to_nv(&time);
 	OUTPUT:
 		RETVAL
 
@@ -388,33 +389,30 @@ void timer(POSIX::RT::Clock clockid, ...)
 		PUSHs(timer_instantiate(&para, "POSIX::RT::Timer", 16));
 
 #if defined(_POSIX_CLOCK_SELECTION) && _POSIX_CLOCK_SELECTION >= 0
-NV sleep(POSIX::RT::Clock clockid, NV frac_time, bool abstime = FALSE)
+struct timespec sleep(POSIX::RT::Clock clockid, struct timespec time, bool abstime = FALSE)
 	PREINIT:
-		struct timespec sleep_time, remain_time;
+		struct timespec remain_time;
 		int flags;
 	CODE:
 		flags = abstime ? TIMER_ABSTIME : 0;
-		nv_to_timespec(frac_time, &sleep_time);
 
-		if (clock_nanosleep(clockid, flags, &sleep_time, &remain_time) == EINTR)
-			RETVAL = abstime ? frac_time : timespec_to_nv(&remain_time);
+		if (clock_nanosleep(clockid, flags, &time, &remain_time) == EINTR)
+			RETVAL = abstime ? time : remain_time;
 		else 
-			RETVAL = 0;
+			RETVAL = no_time;
 	OUTPUT:
 		RETVAL
 
-NV sleep_deeply(POSIX::RT::Clock clockid, NV frac_time, bool abstime = FALSE)
+NV sleep_deeply(POSIX::RT::Clock clockid, struct timespec time, bool abstime = FALSE)
 	PREINIT:
-		struct timespec sleep_time;
 	CODE:
-		if (abstime)
-			nv_to_timespec(frac_time, &sleep_time);
-		else {
-			if (clock_gettime(clockid, &sleep_time) == -1)
+		if (!abstime) {
+			struct timespec current_time;
+			if (clock_gettime(clockid, &current_time) == -1)
 				die_sys("Couldn't get time: %s");
-			nv_to_timespec(timespec_to_nv(&sleep_time) + frac_time, &sleep_time);
+			timespec_add(&time, &current_time);
 		}
-		while (clock_nanosleep(clockid, TIMER_ABSTIME, &sleep_time, NULL) == EINTR);
+		while (clock_nanosleep(clockid, TIMER_ABSTIME, &time, NULL) == EINTR);
 		RETVAL = 0;
 	OUTPUT:
 		RETVAL
