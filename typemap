@@ -9,3 +9,6 @@ T_CLOCK
 	$var = get_clock($arg, \"$func_name\")
 T_CLOCKID
 	$var = get_clockid($arg)
+OUTPUT
+T_CLOCK
+	$arg = create_clock($var, class);

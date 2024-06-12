@@ -316,9 +316,9 @@ MODULE = POSIX::RT::Timer				PACKAGE = POSIX::RT::Clock
 
 PROTOTYPES: DISABLED
 
-SV* new(SV* class, clockid_t clockid = CLOCK_REALTIME)
+POSIX::RT::Clock new(SV* class, clockid_t clockid = CLOCK_REALTIME)
 	CODE:
-		RETVAL = create_clock(clockid, class);
+		RETVAL = clockid;
 	OUTPUT:
 		RETVAL
 
@@ -329,25 +329,21 @@ UV handle(POSIX::RT::Clock clock)
 		RETVAL
 
 #if defined(_POSIX_CPUTIME) && _POSIX_CPUTIME >= 0
-SV* get_cpuclock(SV* class, SV* pid = undef)
-	PREINIT:
-		clockid_t clockid;
+POSIX::RT::Clock get_cpuclock(SV* class, SV* pid = undef)
 	CODE:
 		if (SvOK(pid) && SvROK(pid) && sv_derived_from(pid, "threads")) {
 #if defined(USE_ITHREADS) && defined(_POSIX_THREAD_CPUTIME) && _POSIX_THREAD_CPUTIME >= 0
 			pthread_t* handle = get_pthread(pid);
-			if (pthread_getcpuclockid(*handle, &clockid) != 0)
+			if (pthread_getcpuclockid(*handle, &RETVAL) != 0)
 				die_sys("Could not get cpuclock: %s");
 #else
 			Perl_croak(aTHX_ "Can't get CPU time for threads");
 #endif
 		}
 		else {
-			if (clock_getcpuclockid(SvOK(pid) ? SvIV(pid) : 0, &clockid) != 0)
+			if (clock_getcpuclockid(SvOK(pid) ? SvIV(pid) : 0, &RETVAL) != 0)
 				die_sys("Could not get cpuclock: %s");
 		}
-		
-		RETVAL = create_clock(clockid, class);
 	OUTPUT:
 		RETVAL
 
