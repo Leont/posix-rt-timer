@@ -89,14 +89,6 @@ static void nv_to_timespec(NV input, struct timespec* output) {
 	output->tv_nsec = (long) ((input - output->tv_sec) * NANO_SECONDS);
 }
 
-static clockid_t S_get_clock(pTHX_ SV* ref, const char* funcname) {
-	SV* value;
-	if (!SvROK(ref) || !(value = SvRV(ref)))
-		Perl_croak(aTHX_ "Could not %s: this variable is not a clock", funcname);
-	return SvUV(value);
-}
-#define get_clock(ref, func) S_get_clock(aTHX_ ref, func)
-
 #if defined(SIGEV_THREAD_ID) && defined(SYS_gettid)
 #include <sys/syscall.h>
 #define gettid() syscall(SYS_gettid)
@@ -104,16 +96,6 @@ static clockid_t S_get_clock(pTHX_ SV* ref, const char* funcname) {
 #define sigev_notify_thread_id   _sigev_un._tid
 #endif
 #endif
-
-static SV* S_create_clock(pTHX_ clockid_t clockid, SV* class) {
-	SV *tmp, *retval;
-	tmp = newSViv(clockid);
-	retval = newRV_noinc(tmp);
-	sv_bless(retval, gv_stashsv(class, 0));
-	SvREADONLY_on(tmp);
-	return retval;
-}
-#define create_clock(clockid, class) S_create_clock(aTHX_ clockid, class)
 
 #if defined(_POSIX_CLOCK_SELECTION) && _POSIX_CLOCK_SELECTION >= 0
 static int my_clock_nanosleep(pTHX_ clockid_t clockid, int flags, const struct timespec* request, struct timespec* remain) {
@@ -171,7 +153,7 @@ static timer_init S_timer_args(pTHX_ SV** begin, Size_t items) {
 		current = SvPV(key, curlen);
 		if (curlen == 5) {
 			if (strEQ(current, "clock"))
-				result.clockid = SvROK(value) ? get_clock(value, "create timer") : get_clockid(value);
+				result.clockid = SvROK(value) ? SvUV(SvRV(value)) : get_clockid(value);
 			else if (strEQ(current, "value"))
 				nv_to_timespec(SvNV(value), &result.itimer.it_value);
 			else if (strEQ(current, "ident"))

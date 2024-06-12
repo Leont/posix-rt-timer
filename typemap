@@ -1,15 +1,10 @@
 POSIX::RT::Timer T_INTOBJ
-POSIX::RT::Clock T_CLOCK
+POSIX::RT::Clock T_INTOBJ
 clockid_t T_CLOCKID
 timer_init T_TIMER_ARGS
 
 INPUT
-T_CLOCK
-	$var = get_clock($arg, \"$func_name\")
 T_CLOCKID
 	$var = get_clockid($arg)
 T_TIMER_ARGS
 	$var = timer_args(&ST($argoff), items - $argoff)
-OUTPUT
-T_CLOCK
-	$arg = create_clock($var, class);
