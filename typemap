@@ -1,0 +1,11 @@
+POSIX::RT::Timer T_TIMER
+POSIX::RT::Clock T_CLOCK
+clockid_t T_CLOCKID
+
+INPUT
+T_TIMER
+	$var = get_timer($arg, \"$func_name\")
+T_CLOCK
+	$var = get_clock($arg, \"$func_name\")
+T_CLOCKID
+	$var = get_clockid($arg)
