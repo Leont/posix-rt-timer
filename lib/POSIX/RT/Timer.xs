@@ -270,13 +270,12 @@ MODULE = POSIX::RT::Timer				PACKAGE = POSIX::RT::Timer
 
 PROTOTYPES: DISABLED
 
-void new(SV* class, ...)
+void new(SV* class, timer_init args, ...)
 	PREINIT:
 		const char* class_str;
 		Size_t length;
 	PPCODE:
 		class_str = SvPV(class, length);
-		timer_init args = timer_args(SP + 2, items - 1);
 		PUSHs(timer_instantiate(&args, class_str, length));
 
 UV handle(POSIX::RT::Timer timer)
@@ -379,9 +378,8 @@ struct timespec get_resolution(POSIX::RT::Clock clockid)
 	OUTPUT:
 		RETVAL
 
-void timer(POSIX::RT::Clock clockid, ...)
+void timer(POSIX::RT::Clock clockid, timer_init args, ...)
 	PPCODE:
-		timer_init args = timer_args(SP + 2, items - 1);
 		args.clockid = clockid;
 		PUSHs(timer_instantiate(&args, "POSIX::RT::Timer", 16));
 
