@@ -143,9 +143,10 @@ typedef struct _timer_init {
 	int flags;
 } timer_init;
 
-static timer_init S_timer_args(pTHX_ SV** begin, Size_t items) {
-	timer_init result = { CLOCK_REALTIME, 0, 0, { { 0 } , { 0 } }, 0 };
+static void S_timer_init_gather(pTHX_ timer_init* result, SV** begin, size_t items) {
 	int i;
+	Zero(result, 1, timer_init);
+	result->clockid = CLOCK_REALTIME;
 	for(i = 0; i < items; i += 2) {
 		const char* current;
 		STRLEN curlen;
@@ -153,31 +154,29 @@ static timer_init S_timer_args(pTHX_ SV** begin, Size_t items) {
 		current = SvPV(key, curlen);
 		if (curlen == 5) {
 			if (strEQ(current, "clock"))
-				result.clockid = SvROK(value) ? SvUV(SvRV(value)) : get_clockid(value);
+				result->clockid = SvROK(value) ? SvUV(SvRV(value)) : get_clockid(value);
 			else if (strEQ(current, "value"))
-				nv_to_timespec(SvNV(value), &result.itimer.it_value);
+				nv_to_timespec(SvNV(value), &result->itimer.it_value);
 			else if (strEQ(current, "ident"))
-				result.ident = SvIV(value);
+				result->ident = SvIV(value);
 			else
 				goto fail;
 		}
 		else if (curlen == 6 && strEQ(current, "signal"))
-			result.signo = (SvIOK(value) || looks_like_number(value)) ? SvIV(value) : whichsig(SvPV_nolen(value));
+			result->signo = (SvIOK(value) || looks_like_number(value)) ? SvIV(value) : whichsig(SvPV_nolen(value));
 		else if (curlen == 8) {
 			if (strEQ(current, "interval"))
-				nv_to_timespec(SvNV(value), &result.itimer.it_interval);
+				nv_to_timespec(SvNV(value), &result->itimer.it_interval);
 			else if (strEQ(current, "absolute"))
-				result.flags |= TIMER_ABSTIME;
+				result->flags |= TIMER_ABSTIME;
 			else
 				goto fail;
 		}
 		else
 			fail: Perl_croak(aTHX_ "Unknown option '%s'", current);
 	}
-
-	return result;
 }
-#define timer_args(begin, items) S_timer_args(aTHX_ begin, items)
+#define timer_init_gather(init, begin, items) S_timer_init_gather(aTHX_ init, begin, items)
 
 static timer_t S_timer_new(pTHX_ timer_init* para) {
 	timer_t timer;
