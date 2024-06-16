@@ -1,8 +1,4 @@
 POSIX::RT::Timer T_INTOBJ
 POSIX::RT::Clock T_INTOBJ
-clockid_t T_CLOCKID
+clockid_t T_PACKED
 timer_init T_SLURP_VAR
-
-INPUT
-T_CLOCKID
-	$var = get_clockid($arg)

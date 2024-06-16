@@ -217,6 +217,8 @@ static const struct timespec no_time = { 0, 0 };
 typedef timer_t POSIX__RT__Timer;
 typedef clockid_t POSIX__RT__Clock;
 
+#define XS_unpack_clockid_t(sv) get_clockid(sv)
+
 MODULE = POSIX::RT::Timer  PACKAGE = POSIX::RT::Timer
 
 PROTOTYPES: DISABLED
