@@ -30,6 +30,9 @@ static map clocks = {
 #ifdef CLOCK_REALTIME_ALARM
 	, { STR_WITH_LEN("realtime_alarm"), CLOCK_REALTIME_ALARM }
 #endif
+#ifdef CLOCK_REALTIME_PRECISE
+	, { STR_WITH_LEN("realtime_precise"), CLOCK_REALTIME_PRECISE }
+#endif
 #ifdef CLOCK_MONOTONIC
 	, { STR_WITH_LEN("monotonic"), CLOCK_MONOTONIC }
 #endif
@@ -41,6 +44,9 @@ static map clocks = {
 #endif
 #ifdef CLOCK_MONOTONIC_COARSE
 	, { STR_WITH_LEN("monotonic_coarse"), CLOCK_MONOTONIC_COARSE }
+#endif
+#ifdef CLOCK_MONOTONIC_PRECISE
+	, { STR_WITH_LEN("monotonic_precise"), CLOCK_MONOTONIC_PRECISE }
 #endif
 #ifdef CLOCK_PROCESS_CPUTIME_ID
 	, { STR_WITH_LEN("process"), CLOCK_PROCESS_CPUTIME_ID }
