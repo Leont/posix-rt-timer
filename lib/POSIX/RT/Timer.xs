@@ -32,8 +32,9 @@ static map clocks = {
 #endif
 #ifdef CLOCK_MONOTONIC
 	, { STR_WITH_LEN("monotonic"), CLOCK_MONOTONIC }
-#elif defined CLOCK_HIGHRES
-	, { STR_WITH_LEN("monotonic"), CLOCK_HIGHRES }
+#endif
+#if defined CLOCK_HIGHRES
+	, { STR_WITH_LEN("highres"), CLOCK_HIGHRES }
 #endif
 #ifdef CLOCK_MONOTONIC_RAW
 	, { STR_WITH_LEN("monotonic_raw"), CLOCK_MONOTONIC_RAW }
