@@ -43,8 +43,9 @@ static map clocks = {
 #endif
 #ifdef CLOCK_PROCESS_CPUTIME_ID
 	, { STR_WITH_LEN("process"), CLOCK_PROCESS_CPUTIME_ID }
-#elif defined CLOCK_PROF
-	, { STR_WITH_LEN("process"), CLOCK_PROF }
+#endif
+#if defined CLOCK_PROF
+	, { STR_WITH_LEN("prof"), CLOCK_PROF }
 #endif
 #ifdef CLOCK_THREAD_CPUTIME_ID
 	, { STR_WITH_LEN("thread"), CLOCK_THREAD_CPUTIME_ID }
