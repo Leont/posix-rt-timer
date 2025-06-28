@@ -54,6 +54,12 @@ static map clocks = {
 #ifdef CLOCK_UPTIME
 	, { STR_WITH_LEN("uptime"), CLOCK_UPTIME }
 #endif
+#ifdef CLOCK_UPTIME_PRECISE
+	, { STR_WITH_LEN("uptime_precise"), CLOCK_UPTIME_PRECISE }
+#endif
+#ifdef CLOCK_UPTIME_FAST
+	, { STR_WITH_LEN("uptime_fast"), CLOCK_UPTIME_FAST }
+#endif
 #ifdef CLOCK_BOOTTIME
 	, { STR_WITH_LEN("boottime"), CLOCK_BOOTTIME }
 #endif
