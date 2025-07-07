@@ -24,6 +24,19 @@ typedef struct { const char* key; STRLEN key_length; clockid_t value; } map[];
 
 static map clocks = {
 	{ STR_WITH_LEN("realtime") , CLOCK_REALTIME  }
+#ifdef CLOCK_MONOTONIC
+	, { STR_WITH_LEN("monotonic"), CLOCK_MONOTONIC }
+#endif
+#ifdef CLOCK_PROCESS_CPUTIME_ID
+	, { STR_WITH_LEN("process"), CLOCK_PROCESS_CPUTIME_ID }
+#endif
+#ifdef CLOCK_THREAD_CPUTIME_ID
+	, { STR_WITH_LEN("thread"), CLOCK_THREAD_CPUTIME_ID }
+#endif
+#ifdef CLOCK_BOOTTIME
+	, { STR_WITH_LEN("boottime"), CLOCK_BOOTTIME }
+#endif
+
 #ifdef CLOCK_REALTIME_COARSE
 	, { STR_WITH_LEN("realtime_coarse"), CLOCK_REALTIME_COARSE }
 #endif
@@ -32,9 +45,6 @@ static map clocks = {
 #endif
 #ifdef CLOCK_REALTIME_PRECISE
 	, { STR_WITH_LEN("realtime_precise"), CLOCK_REALTIME_PRECISE }
-#endif
-#ifdef CLOCK_MONOTONIC
-	, { STR_WITH_LEN("monotonic"), CLOCK_MONOTONIC }
 #endif
 #if defined CLOCK_HIGHRES
 	, { STR_WITH_LEN("highres"), CLOCK_HIGHRES }
@@ -48,14 +58,8 @@ static map clocks = {
 #ifdef CLOCK_MONOTONIC_PRECISE
 	, { STR_WITH_LEN("monotonic_precise"), CLOCK_MONOTONIC_PRECISE }
 #endif
-#ifdef CLOCK_PROCESS_CPUTIME_ID
-	, { STR_WITH_LEN("process"), CLOCK_PROCESS_CPUTIME_ID }
-#endif
 #if defined CLOCK_PROF
 	, { STR_WITH_LEN("prof"), CLOCK_PROF }
-#endif
-#ifdef CLOCK_THREAD_CPUTIME_ID
-	, { STR_WITH_LEN("thread"), CLOCK_THREAD_CPUTIME_ID }
 #endif
 #ifdef CLOCK_UPTIME
 	, { STR_WITH_LEN("uptime"), CLOCK_UPTIME }
@@ -65,9 +69,6 @@ static map clocks = {
 #endif
 #ifdef CLOCK_UPTIME_FAST
 	, { STR_WITH_LEN("uptime_fast"), CLOCK_UPTIME_FAST }
-#endif
-#ifdef CLOCK_BOOTTIME
-	, { STR_WITH_LEN("boottime"), CLOCK_BOOTTIME }
 #endif
 #ifdef CLOCK_BOOTTIME_ALARM
 	, { STR_WITH_LEN("boottime_alarm"), CLOCK_BOOTTIME_ALARM }
