@@ -1,6 +1,8 @@
 Revision history for POSIX-RT-Timer
 
 {{$NEXT}}
+
+0.022     2026-06-17 21:30:54+02:00 Europe/Brussels
           - Switch over to using Time::Spec for all time values
           - Load only TimeSpec typemap, not whole Signal bundle
           - Switch to Dist::Build
