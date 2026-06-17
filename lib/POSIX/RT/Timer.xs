@@ -12,7 +12,6 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-#define NEED_mg_findext
 #include "ppport.h"
 
 #include <signal.h>
@@ -236,7 +235,7 @@ typedef clockid_t POSIX__RT__Clock;
 
 MODULE = POSIX::RT::Timer  PACKAGE = POSIX::RT::Timer
 
-PROTOTYPES: DISABLED
+PROTOTYPES: DISABLE
 
 POSIX::RT::Timer new(SV* class, timer_init args, ...)
 	CODE:
@@ -257,7 +256,7 @@ void get_timeout(POSIX::RT::Timer timer)
 		if (timer_gettime(timer, &value) == -1)
 			die_sys("Couldn't get_time: %s");
 		mXPUSHn(timespec_to_nv(&value.it_value));
-		if (GIMME_V == G_ARRAY)
+		if (GIMME_V == G_LIST)
 			mXPUSHn(timespec_to_nv(&value.it_interval));
 
 void set_timeout(POSIX::RT::Timer timer, struct timespec new_value, struct timespec new_interval = no_time, bool abstime = FALSE)
@@ -268,7 +267,7 @@ void set_timeout(POSIX::RT::Timer timer, struct timespec new_value, struct times
 		if (timer_settime(timer, (abstime ? TIMER_ABSTIME : 0), &new_itimer, &old_itimer) == -1)
 			die_sys("Couldn't set_time: %s");
 		mXPUSHn(timespec_to_nv(&old_itimer.it_value));
-		if (GIMME_V == G_ARRAY)
+		if (GIMME_V == G_LIST)
 			mXPUSHn(timespec_to_nv(&old_itimer.it_interval));
 
 IV get_overrun(POSIX::RT::Timer timer)
@@ -284,8 +283,6 @@ void DESTROY(POSIX::RT::Timer timer)
 		timer_delete(timer);
 
 MODULE = POSIX::RT::Timer				PACKAGE = POSIX::RT::Clock
-
-PROTOTYPES: DISABLED
 
 POSIX::RT::Clock new(SV* class, clockid_t clockid = CLOCK_REALTIME)
 	CODE:
