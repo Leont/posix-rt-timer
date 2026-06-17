@@ -1,4 +1,5 @@
 POSIX::RT::Timer T_INTOBJ
 POSIX::RT::Clock T_INTOBJ
+Time::Spec	T_OPAQUEOBJ
 clockid_t T_PACKED
 timer_init T_SLURP_VAR

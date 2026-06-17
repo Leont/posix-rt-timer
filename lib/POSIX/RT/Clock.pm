@@ -76,7 +76,7 @@ Get the cpu-time clock for C<$id>. If C<$id> is an integer, it's interpreted as 
 
 =item * get_time()
 
-Get the time of this clock.
+Get the time of this clock as a L<Time::Spec>.
 
 =item * set_time($time)
 
@@ -115,6 +115,8 @@ A low-level interface to POSIX clocks is also provided by:
 =item * POSIX::2008
 
 =back
+
+Times are represented using L<Time::Spec>.
 
 =cut
 

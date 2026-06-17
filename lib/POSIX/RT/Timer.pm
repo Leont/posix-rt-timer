@@ -6,6 +6,7 @@ use strict;
 use warnings FATAL => 'all';
 
 use XSLoader ();
+use Time::Spec;
 
 XSLoader::load(__PACKAGE__, __PACKAGE__->VERSION);
 
@@ -47,7 +48,7 @@ Create a new timer. Options include
 
 =item * value = 0
 
-The time in factional seconds for timer expiration. If it is 0 the timer is disarmed.
+The time in factional seconds or L<Time::Spec> object for timer expiration. If it is 0 the timer is disarmed.
 
 =item * interval = 0
 
