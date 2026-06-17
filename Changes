@@ -1,6 +1,7 @@
 Revision history for POSIX-RT-Timer
 
 {{$NEXT}}
+          - Load only TimeSpec typemap, not whole Signal bundle
 
 0.021     2025-07-07 21:50:09+02:00 Europe/Brussels
           - Split prof time from process time
