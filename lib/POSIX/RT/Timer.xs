@@ -95,10 +95,8 @@ static clockid_t S_get_clockid(pTHX_ SV* clock_name) {
 #define NANO_SECONDS 1000000000
 
 static SV* S_timespec_to_sv(pTHX_ struct timespec time) {
-	struct timespec* buffer = safecalloc(1, sizeof(struct timespec));
-	*buffer = time;
 	SV* result = newSV(0);
-	sv_usepvn(newSVrv(result, "Time::Spec"), (char*) buffer, sizeof(struct timespec));
+	sv_setpvn(newSVrv(result, "Time::Spec"), (char*) &time, sizeof(struct timespec));
 	return result;
 }
 #define timespec_to_sv(time) S_timespec_to_sv(aTHX_ time)
