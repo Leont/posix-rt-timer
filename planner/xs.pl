@@ -8,11 +8,14 @@ load_extension('Dist::Build::XS::Conf');
 
 find_libraries_for(source => <<EOF, libs => [ [], [ 'rt' ] ]);
 #include <stdlib.h>
+#include <signal.h>
 #include <time.h>
 
 int main(int argc, const char** argv) {
-	struct timespec time = { 0, 0 };
-	clock_gettime(CLOCK_REALTIME, &time);
+	struct sigevent sev;
+	sev.sigev_notify = SIGEV_NONE;
+	timer_t timer;
+	timer_create(CLOCK_REALTIME, &sev, &timer);
 	return 0;
 }
 
