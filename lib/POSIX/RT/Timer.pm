@@ -6,7 +6,7 @@ use strict;
 use warnings FATAL => 'all';
 
 use XSLoader ();
-use Time::Spec;
+use Time::Spec 0.004;
 
 XSLoader::load(__PACKAGE__, __PACKAGE__->VERSION);
 
